@@ -1,4 +1,6 @@
-package main.java;
+package main.java.slave;
+
+import main.java.datastructures.Request;
 
 public class Slave {
 

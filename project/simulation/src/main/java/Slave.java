@@ -1,10 +1,10 @@
 package main.java;
 
-public class Node {
+public class Slave {
 
     //declare variables
     public int performanceIndex;
-    public boolean availability;
+    public double availability;
 
     //implement setters and getters
     public int getPerformanceIndex() {
@@ -15,18 +15,22 @@ public class Node {
         this.performanceIndex = performanceIndex;
     }
 
-    public boolean isAvailability() {
+    public double isAvailability() {
         return availability;
     }
 
-    public void setAvailability(boolean availability) {
+    public void setAvailability(double availability) {
         this.availability = availability;
     }
 
     //add constructor
-    public Node(int performanceIndex, boolean availability){
+    public Slave(int performanceIndex, double availability){
         this.performanceIndex = performanceIndex;
         this.availability = availability;
+    }
+
+    private void compute(Request request){
+
     }
 
 }

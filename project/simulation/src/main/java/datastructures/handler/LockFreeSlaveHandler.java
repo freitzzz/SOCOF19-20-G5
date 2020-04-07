@@ -1,4 +1,4 @@
-package main.java.datastructures.handler;
+package datastructures.handler;
 
 public class LockFreeSlaveHandler {
 }

@@ -1,12 +1,13 @@
-package main.java.datastructures;
+package datastructures;
 
 import java.util.List;
 
 public class Request {
     public List<Integer>numbers;
     public int requestID;
+    public Operation op;
 
-    enum Operation {
+    public enum Operation {
         ADD,
         MULTIPLY
     }
@@ -27,8 +28,9 @@ public class Request {
         this.requestID = requestID;
     }
 
-    public Request(List<Integer> numbers, int requestID) {
+    public Request(List<Integer> numbers, int requestID,Operation op) {
         this.numbers = numbers;
         this.requestID = requestID;
+        this.op = op;
     }
 }

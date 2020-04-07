@@ -1,8 +1,8 @@
-package main.java.datastructures.handler;
+package datastructures.handler;
 
-import main.java.datastructures.Request;
-import main.java.datastructures.Result;
-import main.java.slave.Slave;
+import datastructures.Request;
+import datastructures.Result;
+import slave.Slave;
 
 public interface SlaveHandler {
 

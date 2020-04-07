@@ -1,38 +1,43 @@
-package main.java.slave;
+package slave;
 
-import main.java.datastructures.Request;
+import datastructures.Request;
+import datastructures.handler.SlaveHandler;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class Slave {
 
     //declare variables
-    public int performanceIndex;
-    public double availability;
+    private int performanceIndex;
+    private double availability;
+    private SlaveHandler slaveHandler;
+    private final Executor exec;
 
     //implement setters and getters
     public int getPerformanceIndex() {
         return performanceIndex;
     }
 
-    public void setPerformanceIndex(int performanceIndex) {
-        this.performanceIndex = performanceIndex;
-    }
-
     public double isAvailability() {
         return availability;
     }
 
-    public void setAvailability(double availability) {
+    private void setAvailability(double availability) {
         this.availability = availability;
     }
 
     //add constructor
-    public Slave(int performanceIndex, double availability){
+    public Slave(int performanceIndex, double availability, SlaveHandler slaveHandler){
         this.performanceIndex = performanceIndex;
         this.availability = availability;
+        this.slaveHandler = slaveHandler;
+        this.exec = Executors.newFixedThreadPool(performanceIndex);
     }
 
-    private void compute(Request request){
-
+    public void compute(Request request){
+        Runnable task = new ComputeThread(request,slaveHandler);
+        exec.execute(task);
     }
 
 }

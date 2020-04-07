@@ -1,4 +1,4 @@
-package main.java.datastructures;
+package datastructures;
 
 public class Result {
     public int value;

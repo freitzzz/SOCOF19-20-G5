@@ -1,5 +1,32 @@
-package main.java.datastructures.handler;
+package datastructures.handler;
 
-public class LockBasedSlaveHandler {
+import datastructures.Request;
+import datastructures.Result;
+import slave.Slave;
+import java.util.ArrayList;
+import java.util.List;
 
+public class LockBasedSlaveHandler implements SlaveHandler{
+
+    private List<Result> results = new ArrayList<>();
+
+    @Override
+    public void requestComputation(Request request) {
+
+    }
+
+    @Override
+    public void pushResult(Result result) {
+        this.results.add(result);
+    }
+
+    @Override
+    public void reportPerformance(Slave slave, int index) {
+
+    }
+
+    @Override
+    public void reportAvailability(Slave slave, double availability) {
+
+    }
 }

@@ -12,7 +12,7 @@ public class Slave {
 
     //declare variables
     private int performanceIndex;
-    private double availability;
+    private AtomicReference<Double> availability;
     private SlaveHandler slaveHandler;
     private final Executor exec;
 
@@ -21,14 +21,14 @@ public class Slave {
         return performanceIndex;
     }
 
-    public double getAvailability() {
+    public AtomicReference<Double> getAvailability() {
         return availability;
     }
 
     //add constructor
-    public Slave(int performanceIndex, double availability, SlaveHandler slaveHandler){
+    public Slave(int performanceIndex, SlaveHandler slaveHandler){
         this.performanceIndex = performanceIndex;
-        this.availability = availability;
+        this.availability = new AtomicReference<>(100d);
         this.slaveHandler = slaveHandler;
         this.exec = Executors.newFixedThreadPool(performanceIndex);
     }

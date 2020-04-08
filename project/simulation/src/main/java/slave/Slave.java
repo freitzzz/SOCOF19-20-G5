@@ -6,13 +6,14 @@ import datastructures.handler.SlaveHandler;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Slave {
 
     //declare variables
     private int performanceIndex;
-    private AtomicReference<Double> availability;
+    private AtomicInteger availability;
     private SlaveHandler slaveHandler;
     private final Executor exec;
 
@@ -21,14 +22,14 @@ public class Slave {
         return performanceIndex;
     }
 
-    public AtomicReference<Double> getAvailability() {
+    public AtomicInteger getAvailability() {
         return availability;
     }
 
     //add constructor
     public Slave(int performanceIndex, SlaveHandler slaveHandler){
         this.performanceIndex = performanceIndex;
-        this.availability = new AtomicReference<>(100d);
+        this.availability = new AtomicInteger(100);
         this.slaveHandler = slaveHandler;
         this.exec = Executors.newFixedThreadPool(performanceIndex);
     }
@@ -38,7 +39,7 @@ public class Slave {
         exec.execute(task);
     }
 
-    public double getAvailabilityReducePerCompute() {
+    public int getAvailabilityReducePerCompute() {
         return 25; // this may vary
     }
 

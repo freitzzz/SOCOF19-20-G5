@@ -7,7 +7,7 @@ import slave.Slave;
 
 public abstract class SlaveHandler {
 
-    private final SlaveScheduler scheduler;
+    protected final SlaveScheduler scheduler;
 
     public SlaveHandler(SlaveScheduler scheduler) {
 

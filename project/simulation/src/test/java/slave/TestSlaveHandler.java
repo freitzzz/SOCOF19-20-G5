@@ -3,13 +3,18 @@ package slave;
 import datastructures.Request;
 import datastructures.Result;
 import datastructures.handler.SlaveHandler;
+import datastructures.scheduler.SlaveScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class TestSlaveHandler implements SlaveHandler {
+public class TestSlaveHandler extends SlaveHandler {
     private ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
+
+    public TestSlaveHandler(SlaveScheduler scheduler) {
+        super(scheduler);
+    }
 
 
     @Override

@@ -11,11 +11,11 @@ import static org.junit.Assert.*;
 
 public class SlaveTest {
 
-    private TestSlaveHandler slaveHandler = new TestSlaveHandler();
+    private TestSlaveHandler slaveHandler = new TestSlaveHandler(null);
 
     @Test
     public void ensureOnePlusOneIsTwo() throws InterruptedException {
-        Slave s = new Slave(1,1, slaveHandler);
+        Slave s = new Slave(1, slaveHandler);
 
         List<Integer> l = new ArrayList<>();
         l.add(1); l.add(1);
@@ -28,7 +28,7 @@ public class SlaveTest {
 
     @Test
     public void ensureTwoTimesTwoIsFour() throws InterruptedException {
-        Slave s = new Slave(1,1, slaveHandler);
+        Slave s = new Slave(1, slaveHandler);
 
         List<Integer> l = new ArrayList<>();
         l.add(2); l.add(2);
@@ -41,7 +41,7 @@ public class SlaveTest {
 
     @Test
     public void ensureTwoTimesZeroIsZero() throws InterruptedException {
-        Slave s = new Slave(1,1, slaveHandler);
+        Slave s = new Slave(1, slaveHandler);
 
         List<Integer> l = new ArrayList<>();
         l.add(2); l.add(0);
@@ -54,7 +54,7 @@ public class SlaveTest {
 
     @Test
     public void ensureMultipleRequestsAreOk(){
-        Slave s = new Slave(1,1, slaveHandler);
+        Slave s = new Slave(1, slaveHandler);
 
         List<Integer> l = new ArrayList<>();
         l.add(2); l.add(0);

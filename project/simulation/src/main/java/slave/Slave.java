@@ -2,7 +2,7 @@ package slave;
 
 import datastructures.Request;
 import datastructures.handler.SlaveHandler;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+//import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -39,7 +39,7 @@ public class Slave {
     }
 
     public double getAvailabilityReducePerCompute() {
-        return 25;
+        return 25; // this may vary
     }
 
 }

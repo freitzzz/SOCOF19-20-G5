@@ -38,10 +38,8 @@ public class Slave {
         exec.execute(task);
     }
 
-    public void reserveWork() {
-
-        throw new NotImplementedException();
-
+    public double getAvailabilityReducePerCompute() {
+        return 25;
     }
 
 }

@@ -14,9 +14,9 @@ public class ComputeThread extends Thread {
     private int requestID;
 
     public ComputeThread(Request r, SlaveHandler slaveMemory){
-        this.numbers= r.numbers;
-        this.op = r.op;
-        this.requestID = r.requestID;
+        this.numbers= r.getNumbers();
+        this.op = r.getOp();
+        this.requestID = r.getRequestID();
         this.slaveMemory = slaveMemory;
     }
 

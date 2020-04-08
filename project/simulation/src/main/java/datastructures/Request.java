@@ -1,11 +1,12 @@
 package datastructures;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Request {
-    public List<Integer>numbers;
-    public int requestID;
-    public Operation op;
+    private final List<Integer>numbers;
+    private final int requestID;
+    private final Operation op;
 
     public enum Operation {
         ADD,
@@ -16,21 +17,32 @@ public class Request {
         return numbers;
     }
 
-    public void setNumbers(List<Integer> numbers) {
-        this.numbers = numbers;
-    }
-
     public int getRequestID() {
         return requestID;
     }
 
-    public void setRequestID(int requestID) {
-        this.requestID = requestID;
+    public Operation getOp() {
+        return op;
     }
 
-    public Request(List<Integer> numbers, int requestID,Operation op) {
+    public Request(List<Integer> numbers, int requestID, Operation op) {
         this.numbers = numbers;
         this.requestID = requestID;
         this.op = op;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Request request = (Request) o;
+        return requestID == request.requestID &&
+                numbers.size() == request.numbers.size() &&
+                op == request.op;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(numbers, requestID, op);
     }
 }

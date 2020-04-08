@@ -2,9 +2,11 @@ package slave;
 
 import datastructures.Request;
 import datastructures.handler.SlaveHandler;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Slave {
 
@@ -19,12 +21,8 @@ public class Slave {
         return performanceIndex;
     }
 
-    public double isAvailability() {
+    public double getAvailability() {
         return availability;
-    }
-
-    private void setAvailability(double availability) {
-        this.availability = availability;
     }
 
     //add constructor
@@ -38,6 +36,12 @@ public class Slave {
     public void compute(Request request){
         Runnable task = new ComputeThread(request,slaveHandler);
         exec.execute(task);
+    }
+
+    public void reserveWork() {
+
+        throw new NotImplementedException();
+
     }
 
 }

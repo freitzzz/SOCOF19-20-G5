@@ -16,8 +16,9 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final LockFreeMap<Integer, LockFreeList<Result>> computationResults = new LockFreeMap<>();
 
-    public LockFreeSlaveHandler(SlaveScheduler scheduler) {
+    public LockFreeSlaveHandler(final SlaveScheduler scheduler, final List<Slave> slaves) {
         super(scheduler);
+        this.slaves.addAll(slaves);
     }
 
     @Override
@@ -26,7 +27,13 @@ public class LockFreeSlaveHandler extends SlaveHandler {
                 .parallelStream()
                 .filter(this::tryReserveSlaveAvailability)
                 .collect(Collectors.toList());
-        super.scheduler.schedule(availableSlaves, request);
+        if(availableSlaves.size() > 0) {
+            computationResults.put(request.getRequestID(), new LockFreeList<>());
+            super.scheduler.schedule(availableSlaves, request);
+        } else {
+            // TODO: If no slaves were reserved for scheduled than we need to announce the master that no slaves are
+            // available
+        }
     }
 
     @Override
@@ -46,9 +53,9 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private boolean tryReserveSlaveAvailability(final Slave slave) {
         boolean reserved = false;
-        final double currentSlaveAvailability  = slave.getAvailability().get();
-        final double slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute();
-        if(slaveAvailabilityAfterCompute >= 0d) {
+        final int currentSlaveAvailability  = slave.getAvailability().get();
+        final int slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute();
+        if(slaveAvailabilityAfterCompute >= 0) {
 
             reserved = slave.getAvailability().compareAndSet(currentSlaveAvailability, slaveAvailabilityAfterCompute);
 

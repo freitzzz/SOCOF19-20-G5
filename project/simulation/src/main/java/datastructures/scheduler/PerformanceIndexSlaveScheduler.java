@@ -22,15 +22,32 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
     public void schedule(List<Slave> slaves, Request request) {
 
         int startIndex = 0;
+        double overallPerformance = 0;
+        double numbersSize= request.getNumbers().size();
 
         for (Slave slave : slaves) {
-            final int formulaResult = request.getNumbers().size() * ( (slave.getPerformanceIndex() * slaves.size() ) / 100);
+            overallPerformance+=slave.getPerformanceIndex();
+        }
 
-            List<Integer> numbersSlice = request.getNumbers().subList(startIndex, formulaResult);
+        for (Slave slave : slaves) {
+            int pi = slave.getPerformanceIndex();
+            int formulaResult = (int) Math.round(numbersSize * (pi / overallPerformance));
+            if(formulaResult < 2){
+                overallPerformance-=pi;
+                continue;
+            }
+            if(startIndex+formulaResult == numbersSize-1){
+                formulaResult++;
+            }
 
-            startIndex = formulaResult;
+            List<Integer> numbersSlice = request.getNumbers().subList(startIndex, startIndex+formulaResult);
 
             slave.compute(new Request(numbersSlice, request.getRequestID(), request.getOp()));
+            if(startIndex+formulaResult == numbersSize){
+                break;
+            }else{
+                startIndex = startIndex+formulaResult;
+            }
         }
     }
 }

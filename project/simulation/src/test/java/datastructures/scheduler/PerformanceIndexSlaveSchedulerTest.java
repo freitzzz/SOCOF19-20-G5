@@ -1,6 +1,8 @@
 package datastructures.scheduler;
 
 import datastructures.Request;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import slave.Slave;
@@ -21,14 +23,27 @@ public class PerformanceIndexSlaveSchedulerTest {
         for(int i = 0; i < 5; i++) {
             final Slave mockSlave = mock(Slave.class);
 
-            when(mockSlave.getPerformanceIndex()).thenReturn(i + 1);
-
             slaves.add(mockSlave);
         }
+
+    }
+
+    @After
+    public void tearDown() {
+        for(Slave s : slaves){
+            reset(s);
+        }
+        reset(request);
     }
 
     @Test
     public void ensureEachSlaveComputesRespectiveNumbersSlice() {
+
+        when(slaves.get(0).getPerformanceIndex()).thenReturn(1);
+        when(slaves.get(1).getPerformanceIndex()).thenReturn(2);
+        when(slaves.get(2).getPerformanceIndex()).thenReturn(3);
+        when(slaves.get(3).getPerformanceIndex()).thenReturn(4);
+        when(slaves.get(4).getPerformanceIndex()).thenReturn(5);
 
         Request requestToCompute = new Request(Arrays.asList(new Integer[]{1, 2 , 3, 4, 5}), 1, Request.Operation.ADD);
 
@@ -42,35 +57,111 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
-        for(int i = 0; i < slaves.size(); i++) {
-
-            final int expectedFormulaResult = (int) (requestToCompute.getNumbers().size() * (Double.valueOf(slaves.get(i).getPerformanceIndex() * slaves.size() ) / 100));
-
-            System.out.println(requestToCompute.getNumbers().size() * (Double.valueOf(slaves.get(i).getPerformanceIndex() * slaves.size() ) / 100));
-
-            List<Integer> expectedNumbersSlice = requestToCompute.getNumbers().subList(startIndex, expectedFormulaResult);
-
-            startIndex = expectedFormulaResult;
-
-            System.out.println(expectedNumbersSlice);
-
-            expectedSlaveRequestsList.add(new Request(expectedNumbersSlice, requestToCompute.getRequestID(), requestToCompute.getOp()));
-        }
+        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(0, 2),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
         scheduler.schedule(slaves, request);
 
-        verify(request, times(slaves.size() * 2)).getNumbers();
+        verify(request, times(1+2)).getNumbers();
 
-        verify(request, times(slaves.size())).getRequestID();
+        verify(request, times(2)).getRequestID();
 
-        verify(request, times(slaves.size())).getOp();
+        verify(request, times(2)).getOp();
 
-        for(int i = 0; i < slaves.size(); i++) {
+        verify(slaves.get(3)).compute(expectedSlaveRequestsList.get(0));
+        verify(slaves.get(4)).compute(expectedSlaveRequestsList.get(1));
 
-            verify(slaves.get(i)).compute(expectedSlaveRequestsList.get(i));
 
+        for(int i = 0; i < 3; i++) {
+            verify(slaves.get(i),never()).compute(any(Request.class));
+        }
+
+    }
+
+    @Test
+    public void ensureOneSlaveComputesAllNumbersWhenOnlyOneNumberRemaining() {
+
+        when(slaves.get(0).getPerformanceIndex()).thenReturn(5);
+        when(slaves.get(1).getPerformanceIndex()).thenReturn(0);
+        when(slaves.get(2).getPerformanceIndex()).thenReturn(0);
+        when(slaves.get(3).getPerformanceIndex()).thenReturn(0);
+        when(slaves.get(4).getPerformanceIndex()).thenReturn(2);
+
+        Request requestToCompute = new Request(Arrays.asList(new Integer[]{1, 2 , 3}), 1, Request.Operation.ADD);
+
+        when(request.getNumbers()).thenReturn(requestToCompute.getNumbers());
+
+        when(request.getRequestID()).thenReturn(requestToCompute.getRequestID());
+
+        when(request.getOp()).thenReturn(requestToCompute.getOp());
+
+        int startIndex = 0;
+
+        final List<Request> expectedSlaveRequestsList = new ArrayList<>();
+
+        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        //expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
+
+        PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
+
+        scheduler.schedule(slaves, request);
+
+        verify(request, times(1+1)).getNumbers();
+
+        verify(request, times(1)).getRequestID();
+
+        verify(request, times(1)).getOp();
+
+        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0));
+
+
+        for(int i = 1; i < 5; i++) {
+            verify(slaves.get(i),never()).compute(any(Request.class));
+        }
+
+    }
+
+    @Test
+    public void ensureOneSlaveComputesAllNumbersWhenOnlyOneSlaveAvailable() {
+
+        when(slaves.get(0).getPerformanceIndex()).thenReturn(5);
+        when(slaves.get(1).getPerformanceIndex()).thenReturn(0);
+        when(slaves.get(2).getPerformanceIndex()).thenReturn(0);
+        when(slaves.get(3).getPerformanceIndex()).thenReturn(0);
+        when(slaves.get(4).getPerformanceIndex()).thenReturn(0);
+
+        Request requestToCompute = new Request(Arrays.asList(new Integer[]{1, 2 , 3}), 1, Request.Operation.ADD);
+
+        when(request.getNumbers()).thenReturn(requestToCompute.getNumbers());
+
+        when(request.getRequestID()).thenReturn(requestToCompute.getRequestID());
+
+        when(request.getOp()).thenReturn(requestToCompute.getOp());
+
+        int startIndex = 0;
+
+        final List<Request> expectedSlaveRequestsList = new ArrayList<>();
+
+        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        //expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
+
+        PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
+
+        scheduler.schedule(slaves, request);
+
+        verify(request, times(1+1)).getNumbers();
+
+        verify(request, times(1)).getRequestID();
+
+        verify(request, times(1)).getOp();
+
+        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0));
+
+
+        for(int i = 1; i < 5; i++) {
+            verify(slaves.get(i),never()).compute(any(Request.class));
         }
 
     }

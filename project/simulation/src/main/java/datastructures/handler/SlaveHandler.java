@@ -22,6 +22,6 @@ public abstract class SlaveHandler {
 
     public abstract void requestComputation(Request request);
     public abstract void pushResult(Result result);
-    public abstract void reportPerformance(Slave slave, int index);
-    public abstract void reportAvailability(Slave slave, double availability);
+    public abstract void reportPerformance(Slave slave);
+    public abstract void reportAvailability(Slave slave);
 }

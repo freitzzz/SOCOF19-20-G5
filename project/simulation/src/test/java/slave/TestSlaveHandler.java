@@ -13,7 +13,7 @@ public class TestSlaveHandler extends SlaveHandler {
     private ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
 
     public TestSlaveHandler(SlaveScheduler scheduler) {
-        super(scheduler);
+        super(scheduler, null);
     }
 
 

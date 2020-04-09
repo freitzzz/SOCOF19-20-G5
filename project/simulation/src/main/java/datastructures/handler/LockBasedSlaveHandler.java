@@ -6,9 +6,9 @@ import slave.Slave;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LockBasedSlaveHandler implements SlaveHandler{
+public class LockBasedSlaveHandler{
 
-    private List<Result> results = new ArrayList<>();
+    /*private List<Result> results = new ArrayList<>();
 
     @Override
     public void requestComputation(Request request) {
@@ -28,5 +28,5 @@ public class LockBasedSlaveHandler implements SlaveHandler{
     @Override
     public void reportAvailability(Slave slave, double availability) {
 
-    }
+    }*/
 }

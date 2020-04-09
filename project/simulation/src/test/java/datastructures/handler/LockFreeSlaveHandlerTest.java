@@ -1,7 +1,9 @@
 package datastructures.handler;
 
 import datastructures.Request;
+import datastructures.Result;
 import datastructures.scheduler.SlaveScheduler;
+import master.Master;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,6 +22,8 @@ public class LockFreeSlaveHandlerTest {
     private static final SlaveScheduler scheduler = mock(SlaveScheduler.class);
 
     private static final Request request = mock(Request.class);
+
+    private static final Master master = mock(Master.class);
 
     @BeforeClass
     public static void setUp() {
@@ -40,6 +44,8 @@ public class LockFreeSlaveHandlerTest {
         reset(scheduler);
 
         reset(request);
+
+        reset(master);
     }
 
     @Test
@@ -50,7 +56,7 @@ public class LockFreeSlaveHandlerTest {
             when(slave.getAvailabilityReducePerCompute()).thenReturn(25);
         });
 
-        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, slaves);
+        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
 
         slaveHandler.requestComputation(request);
 
@@ -60,6 +66,8 @@ public class LockFreeSlaveHandlerTest {
         });
 
         verify(scheduler, only()).schedule(slaves, request);
+
+        verify(master, never()).receiveRequestCouldNotBeScheduled(request);
     }
 
     @Test
@@ -82,7 +90,7 @@ public class LockFreeSlaveHandlerTest {
         when(slaves.get(4).getAvailability()).thenReturn(new AtomicInteger(100));
         when(slaves.get(4).getAvailabilityReducePerCompute()).thenReturn(100);
 
-        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, slaves);
+        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
 
         slaveHandler.requestComputation(request);
 
@@ -102,6 +110,8 @@ public class LockFreeSlaveHandlerTest {
         verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute();
 
         verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, request);
+
+        verify(master, never()).receiveRequestCouldNotBeScheduled(request);
     }
 
     @Test
@@ -112,7 +122,7 @@ public class LockFreeSlaveHandlerTest {
             when(slave.getAvailabilityReducePerCompute()).thenReturn(25);
         });
 
-        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, slaves);
+        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
 
         slaveHandler.requestComputation(request);
 
@@ -122,5 +132,77 @@ public class LockFreeSlaveHandlerTest {
         });
 
         verify(scheduler, never()).schedule(any(List.class), any(Request.class));
+
+        verify(master, only()).receiveRequestCouldNotBeScheduled(request);
+    }
+
+    @Test
+    public void ensureWhenPushingResultsMasterDoesNotReceiveTheFinalResultIfScheduledSlavesHaventFinishCompute() {
+
+        LockFreeSlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        slaves.forEach(slave -> {
+            when(slave.getAvailability()).thenReturn(new AtomicInteger(100));
+            when(slave.getAvailabilityReducePerCompute()).thenReturn(25);
+        });
+
+        when(request.getRequestID()).thenReturn(1);
+
+        slaveHandler.requestComputation(request);
+
+        Result result = mock(Result.class);
+
+        when(result.getRequestID()).thenReturn(1);
+
+        // don't push the result of the last slave
+
+        for(int i = 0; i < slaves.size() - 1; i++) {
+            slaveHandler.pushResult(result);
+        }
+
+        verify(result, times(slaves.size() - 1)).getRequestID();
+
+        verify(master, never()).receiveResult(any(Result.class));
+
+        // now push the last one
+
+        slaveHandler.pushResult(result);
+
+        verify(result, times(slaves.size() + 1)).getRequestID();
+
+        verify(result, times(slaves.size())).getValue();
+
+        verify(master, only()).receiveResult(any(Result.class));
+    }
+
+    @Test
+    public void ensureMasterReceivesTheCorrectValueOfTheFinalResult() {
+
+        LockFreeSlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        slaves.forEach(slave -> {
+            when(slave.getAvailability()).thenReturn(new AtomicInteger(100));
+            when(slave.getAvailabilityReducePerCompute()).thenReturn(25);
+        });
+
+        when(request.getRequestID()).thenReturn(1);
+
+        slaveHandler.requestComputation(request);
+
+        Result result = mock(Result.class);
+
+        when(result.getRequestID()).thenReturn(1);
+
+        when(result.getValue()).thenReturn(1);
+
+        // don't push the result of the last slave
+
+        for(int i = 0; i < slaves.size(); i++) {
+            slaveHandler.pushResult(result);
+        }
+
+        Result finalResult = new Result(slaves.size() * 1, 1);
+
+        verify(master, only()).receiveResult(finalResult);
     }
 }

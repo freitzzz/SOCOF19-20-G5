@@ -3,15 +3,20 @@ package datastructures.handler;
 import datastructures.Request;
 import datastructures.Result;
 import datastructures.scheduler.SlaveScheduler;
+import master.Master;
 import slave.Slave;
 
 public abstract class SlaveHandler {
 
     protected final SlaveScheduler scheduler;
 
-    public SlaveHandler(SlaveScheduler scheduler) {
+    protected final Master master;
+
+    public SlaveHandler(final SlaveScheduler scheduler, final Master master) {
 
         this.scheduler = scheduler;
+
+        this.master = master;
 
     }
 

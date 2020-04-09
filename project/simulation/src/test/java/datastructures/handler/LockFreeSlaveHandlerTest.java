@@ -1,5 +1,7 @@
 package datastructures.handler;
 
+import datastructures.AvailabilityDetails;
+import datastructures.PerformanceDetails;
 import datastructures.Request;
 import datastructures.Result;
 import datastructures.scheduler.SlaveScheduler;
@@ -204,5 +206,39 @@ public class LockFreeSlaveHandlerTest {
         Result finalResult = new Result(slaves.size() * 1, 1);
 
         verify(master, only()).receiveResult(finalResult);
+    }
+
+    @Test
+    public void ensureMasterReceivesSlavePerformanceDetails() {
+
+        Slave slave = slaves.get(0);
+
+        when(slave.getPerformanceIndex()).thenReturn(1);
+
+        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        PerformanceDetails expectedPerformanceDetails = new PerformanceDetails(slave, slave.getPerformanceIndex());
+
+        slaveHandler.reportPerformance(slave);
+
+        verify(master, only()).receiveSlavePerformanceDetails(expectedPerformanceDetails);
+
+    }
+
+    @Test
+    public void ensureMasterReceivesSlaveAvailabilityDetails() {
+
+        Slave slave = slaves.get(0);
+
+        when(slave.getAvailability()).thenReturn(new AtomicInteger(1));
+
+        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        AvailabilityDetails expectedAvailabilityDetails = new AvailabilityDetails(slave, slave.getAvailability().intValue());
+
+        slaveHandler.reportAvailability(slave);
+
+        verify(master, only()).receiveSlaveAvailability(expectedAvailabilityDetails);
+
     }
 }

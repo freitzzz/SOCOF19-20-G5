@@ -1,5 +1,7 @@
 package datastructures.handler;
 
+import datastructures.AvailabilityDetails;
+import datastructures.PerformanceDetails;
 import datastructures.Request;
 import datastructures.Result;
 import datastructures.list.LockFreeList;
@@ -49,12 +51,20 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     @Override
-    public void reportPerformance(Slave slave, int index) {
+    public void reportPerformance(Slave slave) {
+
+        final PerformanceDetails details = new PerformanceDetails(slave, slave.getPerformanceIndex());
+
+        super.master.receiveSlavePerformanceDetails(details);
 
     }
 
     @Override
-    public void reportAvailability(Slave slave, double availability) {
+    public void reportAvailability(Slave slave) {
+
+        final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
+
+        super.master.receiveSlaveAvailability(details);
 
     }
 

@@ -3,7 +3,6 @@ package slave;
 import datastructures.CodeExecutionRequest;
 import org.junit.Test;
 
-import datastructures.Request;
 import java.util.ArrayList;
 import java.util.List;
 

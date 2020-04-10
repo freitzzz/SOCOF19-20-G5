@@ -18,6 +18,7 @@ public class ComputeThread extends Thread {
         this.numbers= r.getNumbers();
         this.slaveMemory = slaveMemory;
         this.s = s;
+        this.request = r;
     }
 
     @Override

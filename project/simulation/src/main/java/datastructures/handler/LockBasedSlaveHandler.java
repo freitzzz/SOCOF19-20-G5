@@ -73,7 +73,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     public void reportPerformance(Slave slave) {
 
         // for demo usage only System.out.println(slave.getPerformanceIndex() + Thread.currentThread().getName());
-        
+
         final PerformanceDetails details = new PerformanceDetails(slave, slave.getPerformanceIndex());
 
         super.master.receiveSlavePerformanceDetails(details);

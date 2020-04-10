@@ -35,7 +35,7 @@ public class Slave {
     }
 
     public void compute(Request request){
-        Runnable task = new ComputeThread(request,slaveHandler);
+        Runnable task = new ComputeThread(request,slaveHandler,this);
         exec.execute(task);
     }
 

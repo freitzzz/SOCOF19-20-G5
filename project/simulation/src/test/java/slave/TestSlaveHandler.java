@@ -28,14 +28,15 @@ public class TestSlaveHandler extends SlaveHandler {
     }
 
     @Override
-    public void reportPerformance(Slave slave, int index) {
+    public void reportPerformance(Slave slave) {
 
     }
 
     @Override
-    public void reportAvailability(Slave slave, double availability) {
+    public void reportAvailability(Slave slave) {
 
     }
+
 
     public Result getResult(int id){
         while(true){

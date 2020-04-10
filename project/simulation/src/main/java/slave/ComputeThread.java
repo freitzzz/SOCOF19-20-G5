@@ -12,12 +12,14 @@ public class ComputeThread extends Thread {
     private SlaveHandler slaveMemory;
     private Request.Operation op;
     private int requestID;
+    private Slave s;
 
-    public ComputeThread(Request r, SlaveHandler slaveMemory){
+    public ComputeThread(Request r, SlaveHandler slaveMemory,Slave s){
         this.numbers= r.getNumbers();
         this.op = r.getOp();
         this.requestID = r.getRequestID();
         this.slaveMemory = slaveMemory;
+        this.s = s;
     }
 
     @Override
@@ -34,6 +36,7 @@ public class ComputeThread extends Thread {
         Result r = new Result(res,requestID);
 
         slaveMemory.pushResult(r);
+        slaveMemory.reportAvailability(s);
     }
 
     private int sum() {

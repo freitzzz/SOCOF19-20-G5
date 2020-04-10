@@ -47,7 +47,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
             //if availableSlaves > 0 then computationResults.put(request.getRequestID(), new LockBasedList<>()) and scheduler.schedule(availableSlaves, request)
             if(availableSlaves.size() > 0){
                 computationResults.put(request.getRequestID(), new LockBasedList<>(availableSlaves.size()));
-                super.scheduler.schedule(availableSlaves, request);
+                super.scheduler.schedule(availableSlaves, request, this);
             }
         } finally {
             System.out.println("Request added" + Thread.currentThread().getName());

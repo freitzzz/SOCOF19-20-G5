@@ -62,7 +62,7 @@ public class LockBasedSlaveHandlerTest {
             verify(slave, times(1)).getAvailabilityReducePerCompute();
         });
 
-        verify(scheduler, only()).schedule(slaves, request);
+        verify(scheduler, only()).schedule(slaves, request, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(request);
     }
@@ -105,7 +105,7 @@ public class LockBasedSlaveHandlerTest {
         verify(slaves.get(2), times(1)).getAvailability();
         verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute();
 
-        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, request);
+        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, request, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(request);
     }

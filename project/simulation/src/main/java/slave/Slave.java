@@ -15,7 +15,6 @@ public class Slave implements Comparable<Slave> {
     //declare variables
     private int performanceIndex;
     private AtomicInteger availability;
-    private SlaveHandler slaveHandler;
     private final Executor exec;
 
     //implement setters and getters
@@ -28,14 +27,13 @@ public class Slave implements Comparable<Slave> {
     }
 
     //add constructor
-    public Slave(int performanceIndex, SlaveHandler slaveHandler){
+    public Slave(int performanceIndex){
         this.performanceIndex = performanceIndex;
         this.availability = new AtomicInteger(100);
-        this.slaveHandler = slaveHandler;
         this.exec = Executors.newFixedThreadPool(performanceIndex);
     }
 
-    public void compute(Request request){
+    public void compute(Request request, SlaveHandler slaveHandler){
         Runnable task = new ComputeThread(request,slaveHandler,this);
         exec.execute(task);
     }

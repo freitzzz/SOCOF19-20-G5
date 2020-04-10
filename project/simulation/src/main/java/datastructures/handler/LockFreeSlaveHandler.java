@@ -15,16 +15,14 @@ import java.util.stream.Collectors;
 
 public class LockFreeSlaveHandler extends SlaveHandler {
 
-    public final LockFreeList<Slave> slaves;
+    private final LockFreeList<Slave> slaves;
 
     private final LockFreeMap<Integer, LockFreeList<Result>> computationResults = new LockFreeMap<>();
 
-    public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Integer> slavesPerformanceIndex) {
+    public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
         super(scheduler, master);
-        this.slaves = new LockFreeList<>(slavesPerformanceIndex.size());
-        for(int i = 0; i < slavesPerformanceIndex.size(); i++) {
-            this.slaves.add(new Slave(slavesPerformanceIndex.get(i), this));
-        }
+        this.slaves = new LockFreeList<>(slaves.size());
+        this.slaves.addAll(slaves);
     }
 
     @Override
@@ -35,7 +33,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
                 .collect(Collectors.toList());
         if(availableSlaves.size() > 0) {
             computationResults.put(request.getRequestID(), new LockFreeList<>(availableSlaves.size()));
-            super.scheduler.schedule(availableSlaves, request);
+            super.scheduler.schedule(availableSlaves, request, this);
         } else {
             super.master.receiveRequestCouldNotBeScheduled(request);
         }
@@ -65,9 +63,11 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     @Override
     public void reportAvailability(Slave slave) {
 
-        final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
+        if(tryUnreserveSlaveAvailability(slave)) {
+            final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
 
-        super.master.receiveSlaveAvailability(details);
+            super.master.receiveSlaveAvailability(details);
+        }
 
     }
 
@@ -81,5 +81,17 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
         }
         return reserved;
+    }
+
+    private boolean tryUnreserveSlaveAvailability(final Slave slave) {
+        boolean unreserved = false;
+        final int currentSlaveAvailability  = slave.getAvailability().get();
+        final int slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute();
+        if(slaveAvailabilityAfterCompute <= 100) {
+
+            unreserved = slave.getAvailability().compareAndSet(currentSlaveAvailability, slaveAvailabilityAfterCompute);
+
+        }
+        return unreserved;
     }
 }

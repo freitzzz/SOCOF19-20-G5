@@ -4,6 +4,7 @@ import datastructures.AvailabilityDetails;
 import datastructures.PerformanceDetails;
 import datastructures.Request;
 import datastructures.Result;
+import datastructures.scheduler.PerformanceIndexSlaveScheduler;
 import datastructures.scheduler.SlaveScheduler;
 import master.Master;
 import org.junit.After;
@@ -67,7 +68,7 @@ public class LockFreeSlaveHandlerTest {
             verify(slave, times(1)).getAvailabilityReducePerCompute();
         });
 
-        verify(scheduler, only()).schedule(slaves, request);
+        verify(scheduler, only()).schedule(slaves, request, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(request);
     }
@@ -111,7 +112,7 @@ public class LockFreeSlaveHandlerTest {
         verify(slaves.get(2), times(1)).getAvailability();
         verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute();
 
-        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, request);
+        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, request, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(request);
     }
@@ -133,7 +134,7 @@ public class LockFreeSlaveHandlerTest {
             verify(slave, times(1)).getAvailabilityReducePerCompute();
         });
 
-        verify(scheduler, never()).schedule(any(List.class), any(Request.class));
+        verify(scheduler, never()).schedule(any(List.class), any(Request.class), any(SlaveHandler.class));
 
         verify(master, only()).receiveRequestCouldNotBeScheduled(request);
     }
@@ -170,7 +171,7 @@ public class LockFreeSlaveHandlerTest {
 
         slaveHandler.pushResult(result);
 
-        verify(result, times(slaves.size() + 1)).getRequestID();
+        verify(result, times(slaves.size() + 2)).getRequestID();
 
         verify(result, times(slaves.size())).getValue();
 
@@ -240,5 +241,68 @@ public class LockFreeSlaveHandlerTest {
 
         verify(master, only()).receiveSlaveAvailability(expectedAvailabilityDetails);
 
+    }
+
+    @Test
+    public void ensureSlaveHandlerHandlesConcurrentCallsAsExpected() {
+
+        List<Slave> slaves = new ArrayList<>();
+
+        Master master = spy(Master.class);
+
+        SlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
+
+        for(int i = 0; i < 5; i++) {
+
+            slaves.add(new Slave(i + 1));
+
+        }
+
+        LockFreeSlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        final List<Integer> values = new ArrayList<>();
+
+        for(int i = 0; i < 100000; i++) {
+            values.add(i);
+        }
+
+        final int expectedSum = values.parallelStream().reduce(0, (integer, integer2) -> integer + integer2);
+
+        doAnswer(invocation -> {
+
+            slaveHandler.requestComputation(invocation.getArgument(0));
+
+            return null;
+        }).when(master).receiveRequestCouldNotBeScheduled(any(Request.class));
+
+        doAnswer(invocation -> {
+
+            return null;
+        }).when(master).receiveSlaveAvailability(any(AvailabilityDetails.class));
+
+        final AtomicInteger timesInvoked = new AtomicInteger();
+
+        doAnswer(invocation -> {
+            timesInvoked.getAndIncrement();
+            Result result = invocation.getArgument(0);
+            if(result.getValue() != expectedSum) {
+                throw new Exception();
+            }
+            return null;
+        }).when(master).receiveResult(any(Result.class));
+
+        for(int i = 0; i < 10000; i++) {
+            slaveHandler.requestComputation(new Request(values, i, Request.Operation.ADD));
+        }
+
+        ((Runnable) () -> {
+            while (timesInvoked.intValue() < 10000) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }).run();
     }
 }

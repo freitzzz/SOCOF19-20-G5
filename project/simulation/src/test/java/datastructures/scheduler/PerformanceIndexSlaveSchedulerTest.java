@@ -1,6 +1,7 @@
 package datastructures.scheduler;
 
 import datastructures.Request;
+import datastructures.handler.SlaveHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -20,6 +21,8 @@ public class PerformanceIndexSlaveSchedulerTest {
     final static List<Slave> slaves = new ArrayList<>();
 
     final static Request request = mock(Request.class);
+
+    final static SlaveHandler slaveHandler = mock(SlaveHandler.class);
 
     @BeforeClass
     public static void setUp() {
@@ -63,7 +66,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        scheduler.schedule(slaves, request);
+        scheduler.schedule(slaves, request, slaveHandler);
 
         verify(request, times(1+2)).getNumbers();
 
@@ -71,12 +74,12 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         verify(request, times(2)).getOp();
 
-        verify(slaves.get(3)).compute(expectedSlaveRequestsList.get(0));
-        verify(slaves.get(4)).compute(expectedSlaveRequestsList.get(1));
+        verify(slaves.get(3)).compute(expectedSlaveRequestsList.get(0), slaveHandler);
+        verify(slaves.get(4)).compute(expectedSlaveRequestsList.get(1), slaveHandler);
 
 
         for(int i = 0; i < 3; i++) {
-            verify(slaves.get(i),never()).compute(any(Request.class));
+            verify(slaves.get(i),never()).compute(any(Request.class), any(SlaveHandler.class));
         }
 
     }
@@ -104,7 +107,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        scheduler.schedule(slaves, request);
+        scheduler.schedule(slaves, request, slaveHandler);
 
         verify(request, times(1+1)).getNumbers();
 
@@ -112,11 +115,11 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         verify(request, times(1)).getOp();
 
-        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0));
+        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0), slaveHandler);
 
 
         for(int i = 1; i < 5; i++) {
-            verify(slaves.get(i),never()).compute(any(Request.class));
+            verify(slaves.get(i),never()).compute(any(Request.class), any(SlaveHandler.class));
         }
 
     }
@@ -144,7 +147,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        scheduler.schedule(slaves, request);
+        scheduler.schedule(slaves, request, slaveHandler);
 
         verify(request, times(1+1)).getNumbers();
 
@@ -152,11 +155,11 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         verify(request, times(1)).getOp();
 
-        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0));
+        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0), any(SlaveHandler.class));
 
 
         for(int i = 1; i < 5; i++) {
-            verify(slaves.get(i),never()).compute(any(Request.class));
+            verify(slaves.get(i),never()).compute(any(Request.class), any(SlaveHandler.class));
         }
 
     }
@@ -180,7 +183,7 @@ public class PerformanceIndexSlaveSchedulerTest {
                 Request request = invocation.getArgument(0);
                 numbersInvokedCount.addAndGet(request.getNumbers().size());
                 return null;
-            }).when(slaves.get(i)).compute(any(Request.class));
+            }).when(slaves.get(i)).compute(any(Request.class), any(SlaveHandler.class));
 
         }
 
@@ -206,7 +209,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
             when(request.getNumbers()).thenReturn(requestNumbers);
 
-            scheduler.schedule(slaves, request);
+            scheduler.schedule(slaves, request, slaveHandler);
 
             Assert.assertEquals(requestNumbersSize, numbersInvokedCount.get());
 

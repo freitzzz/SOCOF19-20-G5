@@ -4,10 +4,11 @@ import java.util.List;
 
 import datastructures.Request;
 
+import datastructures.handler.SlaveHandler;
 import slave.Slave;
 
 public interface SlaveScheduler {
 
-    void schedule(List<Slave> slaves, Request request);
+    void schedule(List<Slave> slaves, Request request, SlaveHandler slaveHandler);
 
 }

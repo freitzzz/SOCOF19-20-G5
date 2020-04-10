@@ -155,7 +155,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         verify(request, times(1)).getOp();
 
-        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0), any(SlaveHandler.class));
+        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0), slaveHandler);
 
 
         for(int i = 1; i < 5; i++) {
@@ -189,13 +189,13 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         SlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        for(int i = 0; i < 50000; i++) {
+        for(int i = 0; i < 5000; i++) {
 
             final List<Integer> requestNumbers = new ArrayList<>();
 
             Random random = new Random();
 
-            final int requestNumbersSize = random.nextInt(10000);
+            final int requestNumbersSize = random.nextInt(1000);
 
             for (int j = 0; j < requestNumbersSize; j++) {
 

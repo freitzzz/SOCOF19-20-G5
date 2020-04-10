@@ -8,6 +8,46 @@ The development was divided in three parts, being the first two the implementati
 
 ## Slave Node Implementation (Part 1)
 
+
+
+### Load balancing algorithm
+
+The formula used for deciding how many numbers each slave receives is as follows:
+
+![](diagrams/res/PerformanceIndexFormula.png)
+
+Where n is the total amount of numbers to distribute, p is the current slave's performance index and P is the sum of all slave's performance. This formula always results in values between 0 and the total amount of numbers and the slaves with higher performance get a more numbers to process.
+
+In case there are slaves with such a low performance index that the formula returns values inferior to 2 those slaves receive no numbers and P is decremented by that slaves' performance index.
+
+In the event that the amount of remaining numbers is 1 we increment the amount of numbers that the current slave needs to process.
+
+Afterwards, a sublist is created from the numbers' list starting from a starting index, which begins as 0, to a end index which is the sum of the starting index and the number computed from the previous formula. This sublist is then sent to the respective slave for computation.
+
+Then the starting index is incremented to become equal to the end index and we redo the steps above for the next slave. This continues until there are no slaves or numbers left to distribute.
+
+Due to the numbers in the formula being rounded because of floating values, there can be some cases where the total number of distributed values is less or more than the supposed. Therefore we introduced two conditions: the first is that the last slave always receives the remaining numbers, this slave has the highest performance since the slave list is sorted according to the slave's performance index, the second condition is if the sum of the starting index and the number computed by the formula is more than the value of the total numbers then the end index is equated to the value of the total numbers. These conditions can be observed as code below.
+
+```
+if(i == slaves.size()-1){
+	//create sublist from current start index to the value of total numbers.
+	...
+	break;
+}
+...
+if(numbersSize-endIndex < 2){
+	//this condition also includes the case where the amount of remaining numbers is 1
+	endIndex=numbersSize;
+}
+
+```
+
+In the flowchart below it is possible to observe the process described above that defines this load balancing algorithm.
+
+![](diagrams/res/PerformanceIndexSlaveScheduler.png)
+
+
+
 ## Master Node Implementation (Part 2)
 
 ## System Integration and Analysis (Part 3)

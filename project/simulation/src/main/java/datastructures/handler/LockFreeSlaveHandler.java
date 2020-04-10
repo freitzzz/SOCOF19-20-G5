@@ -28,9 +28,16 @@ public class LockFreeSlaveHandler extends SlaveHandler {
                 .parallelStream()
                 .filter(slave -> tryReserveSlaveAvailability(slave, request))
                 .collect(Collectors.toList());
+
         if(availableSlaves.size() > 0) {
-            computationResults.put(request.getRequestID(), new LockFreeList<>(availableSlaves.size()));
-            super.scheduler.schedule(availableSlaves, (CodeExecutionRequest)request, this);
+
+            if(request instanceof CodeExecutionRequest) {
+                computationResults.put(request.getRequestID(), new LockFreeList<>(availableSlaves.size()));
+                super.scheduler.schedule(availableSlaves, (CodeExecutionRequest) request, this);
+            } else {
+                slaves.forEach(slave -> slave.process(request, this));
+            }
+
         } else {
             super.master.receiveRequestCouldNotBeScheduled(request);
         }

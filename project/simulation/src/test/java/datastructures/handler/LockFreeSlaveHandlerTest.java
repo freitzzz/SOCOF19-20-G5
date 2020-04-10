@@ -23,6 +23,8 @@ public class LockFreeSlaveHandlerTest {
 
     private static final CodeExecutionRequest codeExecutionRequest = mock(CodeExecutionRequest.class);
 
+    private static final ReportPerformanceIndexRequest reportPerformanceIndexRequest = mock(ReportPerformanceIndexRequest.class);
+
     private static final Master master = mock(Master.class);
 
     @BeforeClass
@@ -44,6 +46,8 @@ public class LockFreeSlaveHandlerTest {
         reset(scheduler);
 
         reset(codeExecutionRequest);
+
+        reset(reportPerformanceIndexRequest);
 
         reset(master);
     }
@@ -134,6 +138,25 @@ public class LockFreeSlaveHandlerTest {
         verify(scheduler, never()).schedule(any(List.class), any(CodeExecutionRequest.class), any(SlaveHandler.class));
 
         verify(master, only()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
+    }
+
+    @Test
+    public void ensureSlavesReportPerformanceIndexIfRequestIsReportPerformanceIndexRequest() {
+
+        slaves.forEach(slave -> {
+            when(slave.getPerformanceIndex()).thenReturn(1);
+            when(slave.getAvailabilityReducePerCompute(reportPerformanceIndexRequest)).thenReturn(0);
+            when(slave.getAvailability()).thenReturn(new AtomicInteger(100));
+        });
+
+        SlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        slaveHandler.requestSlaves(reportPerformanceIndexRequest);
+
+        slaves.forEach(slave -> verify(slave, atMostOnce()).process(reportPerformanceIndexRequest, slaveHandler));
+
+        verify(scheduler, never()).schedule(anyList(), any(CodeExecutionRequest.class), any(SlaveHandler.class));
+
     }
 
     @Test

@@ -3,50 +3,55 @@ package datastructures.scheduler;
 import datastructures.Request;
 import slave.Slave;
 
+import java.util.Collections;
 import java.util.List;
 
 public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
-
-    /*
-    1, 2, ,3 ,  4, 5 - PI: €PI = 15
-    Formula: NS * (PI / €PI)
-    Example:
-        NS: 5
-        PI: 5
-        SS: 5
-        FR = 5 * (5 * 5) / 100
-        FR =
-     */
 
     @Override
     public void schedule(List<Slave> slaves, Request request) {
 
         int startIndex = 0;
         double overallPerformance = 0;
-        double numbersSize= request.getNumbers().size();
+        int numbersSize= request.getNumbers().size();
+
+        Collections.sort(slaves);
 
         for (Slave slave : slaves) {
             overallPerformance+=slave.getPerformanceIndex();
         }
 
-        for (Slave slave : slaves) {
-            int pi = slave.getPerformanceIndex();
-            int formulaResult = (int) Math.round(numbersSize * (pi / overallPerformance));
+        for (int i = 0; i < slaves.size(); i++) {
+
+            if(i == slaves.size()-1){
+                List<Integer> numbersSlice = request.getNumbers().subList(startIndex, numbersSize);
+
+                slaves.get(i).compute(new Request(numbersSlice, request.getRequestID(), request.getOp()));
+                break;
+            }
+
+            int pi = slaves.get(i).getPerformanceIndex();
+            int formulaResult = (int) (numbersSize * (pi / overallPerformance));
+
             if(formulaResult < 2){
                 overallPerformance-=pi;
                 continue;
             }
-            if(startIndex+formulaResult == numbersSize-1){
-                formulaResult++;
+
+            int endIndex=startIndex+formulaResult;
+
+            if(numbersSize-endIndex < 2){
+                endIndex=numbersSize;
             }
 
-            List<Integer> numbersSlice = request.getNumbers().subList(startIndex, startIndex+formulaResult);
+            List<Integer> numbersSlice = request.getNumbers().subList(startIndex, endIndex);
 
-            slave.compute(new Request(numbersSlice, request.getRequestID(), request.getOp()));
-            if(startIndex+formulaResult == numbersSize){
+            slaves.get(i).compute(new Request(numbersSlice, request.getRequestID(), request.getOp()));
+
+            if(endIndex == numbersSize){
                 break;
             }else{
-                startIndex = startIndex+formulaResult;
+                startIndex = endIndex;
             }
         }
     }

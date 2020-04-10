@@ -4,12 +4,13 @@ import datastructures.Request;
 import datastructures.handler.SlaveHandler;
 //import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.Comparator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Slave {
+public class Slave implements Comparable<Slave> {
 
     //declare variables
     private int performanceIndex;
@@ -43,4 +44,8 @@ public class Slave {
         return 25; // this may vary
     }
 
+    @Override
+    public int compareTo(Slave slave) {
+        return Integer.compare(this.getPerformanceIndex(), slave.getPerformanceIndex());
+    }
 }

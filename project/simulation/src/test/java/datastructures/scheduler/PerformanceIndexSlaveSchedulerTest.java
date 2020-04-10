@@ -2,7 +2,7 @@ package datastructures.scheduler;
 
 import datastructures.Request;
 import org.junit.After;
-import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import slave.Slave;
@@ -10,6 +10,9 @@ import slave.Slave;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.mockito.Mockito.*;
 
 public class PerformanceIndexSlaveSchedulerTest {
@@ -53,8 +56,6 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         when(request.getOp()).thenReturn(requestToCompute.getOp());
 
-        int startIndex = 0;
-
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
         expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(0, 2),requestToCompute.getRequestID(),requestToCompute.getOp()));
@@ -97,12 +98,9 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         when(request.getOp()).thenReturn(requestToCompute.getOp());
 
-        int startIndex = 0;
-
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
         expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
-        //expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
@@ -140,12 +138,9 @@ public class PerformanceIndexSlaveSchedulerTest {
 
         when(request.getOp()).thenReturn(requestToCompute.getOp());
 
-        int startIndex = 0;
-
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
         expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
-        //expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
@@ -164,6 +159,59 @@ public class PerformanceIndexSlaveSchedulerTest {
             verify(slaves.get(i),never()).compute(any(Request.class));
         }
 
+    }
+
+    @Test
+    public void ensureSlaveSchedulerDividesAllNumbersCorrectly() {
+
+        List<Slave> slaves = new ArrayList<>();
+
+        AtomicInteger numbersInvokedCount = new AtomicInteger();
+
+        for(int i = 0; i < 1; i++) {
+
+            final Slave slave = mock(Slave.class);
+
+            when(slave.getPerformanceIndex()).thenReturn(i + 1);
+
+            slaves.add(slave);
+
+            doAnswer(invocation -> {
+                Request request = invocation.getArgument(0);
+                numbersInvokedCount.addAndGet(request.getNumbers().size());
+                return null;
+            }).when(slaves.get(i)).compute(any(Request.class));
+
+        }
+
+        SlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
+
+        for(int i = 0; i < 50000; i++) {
+
+            final List<Integer> requestNumbers = new ArrayList<>();
+
+            Random random = new Random();
+
+            final int requestNumbersSize = random.nextInt(10000);
+
+            for (int j = 0; j < requestNumbersSize; j++) {
+
+                requestNumbers.add(j);
+
+            }
+
+            when(request.getRequestID()).thenReturn(1);
+
+            when(request.getOp()).thenReturn(Request.Operation.ADD);
+
+            when(request.getNumbers()).thenReturn(requestNumbers);
+
+            scheduler.schedule(slaves, request);
+
+            Assert.assertEquals(requestNumbersSize, numbersInvokedCount.get());
+
+            numbersInvokedCount.set(0);
+        }
     }
 
 }

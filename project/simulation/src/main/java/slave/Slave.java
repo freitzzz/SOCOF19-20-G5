@@ -1,5 +1,7 @@
 package slave;
 
+import datastructures.CodeExecutionRequest;
+import datastructures.ReportPerformanceIndexRequest;
 import datastructures.Request;
 import datastructures.handler.SlaveHandler;
 //import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -33,13 +35,26 @@ public class Slave implements Comparable<Slave> {
         this.exec = Executors.newFixedThreadPool(performanceIndex);
     }
 
-    public void compute(Request request, SlaveHandler slaveHandler){
-        Runnable task = new ComputeThread(request,slaveHandler,this);
-        exec.execute(task);
+    public void process(Request request, SlaveHandler slaveHandler){
+        final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
+
+        Runnable taskToBeExecuted;
+
+        if(isCodeExecutionRequest) {
+            taskToBeExecuted = new ComputeThread((CodeExecutionRequest)request, slaveHandler, this);
+        } else {
+            taskToBeExecuted = new ReportPerformanceIndexThread((ReportPerformanceIndexRequest) request, slaveHandler, this);
+        }
+        exec.execute(taskToBeExecuted);
     }
 
-    public int getAvailabilityReducePerCompute() {
-        return 25; // this may vary
+    public int getAvailabilityReducePerCompute(Request request) {
+
+        if(request instanceof CodeExecutionRequest) {
+            return 25; // this may vary
+        } else {
+            return 0;
+        }
     }
 
     @Override

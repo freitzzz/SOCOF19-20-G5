@@ -1,34 +1,17 @@
 package datastructures;
 
-import java.util.List;
 import java.util.Objects;
 
-public class Request {
-    private final List<Integer>numbers;
+public abstract class Request {
+
     private final int requestID;
-    private final Operation op;
-
-    public enum Operation {
-        ADD,
-        MULTIPLY
-    }
-
-    public List<Integer> getNumbers() {
-        return numbers;
-    }
 
     public int getRequestID() {
         return requestID;
     }
 
-    public Operation getOp() {
-        return op;
-    }
-
-    public Request(List<Integer> numbers, int requestID, Operation op) {
-        this.numbers = numbers;
+    public Request(final int requestID) {
         this.requestID = requestID;
-        this.op = op;
     }
 
     @Override
@@ -36,13 +19,11 @@ public class Request {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Request request = (Request) o;
-        return requestID == request.requestID &&
-                numbers.size() == request.numbers.size() &&
-                op == request.op;
+        return requestID == request.requestID;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(numbers, requestID, op);
+        return Objects.hash(requestID);
     }
 }

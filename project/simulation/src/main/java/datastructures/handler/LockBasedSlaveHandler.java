@@ -1,9 +1,6 @@
 package datastructures.handler;
 
-import datastructures.AvailabilityDetails;
-import datastructures.PerformanceDetails;
-import datastructures.Request;
-import datastructures.Result;
+import datastructures.*;
 import datastructures.list.LockBasedList;
 import datastructures.map.LockBasedMap;
 import master.Master;
@@ -29,7 +26,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
 
     @Override
-    public void requestComputation(Request request) {
+    public void requestSlaves(Request request) {
         int slaveAvailabilityAfterCompute = 0;
         int currentSlaveAvailability = 0;
         List<Slave> availableSlaves = new ArrayList<>();
@@ -38,7 +35,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         try{
             for(Slave slave : slaves){
                 currentSlaveAvailability  = slave.getAvailability().get();
-                slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute();
+                slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
                 if(slaveAvailabilityAfterCompute >= 0) {
                     //add slave to availableSlaves List if the slave is available
                     availableSlaves.add(slave);
@@ -47,7 +44,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
             //if availableSlaves > 0 then computationResults.put(request.getRequestID(), new LockBasedList<>()) and scheduler.schedule(availableSlaves, request)
             if(availableSlaves.size() > 0){
                 computationResults.put(request.getRequestID(), new LockBasedList<>(availableSlaves.size()));
-                super.scheduler.schedule(availableSlaves, request, this);
+                super.scheduler.schedule(availableSlaves, (CodeExecutionRequest)request, this);
             }
         } finally {
             System.out.println("Request added" + Thread.currentThread().getName());
@@ -81,7 +78,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     }
 
     @Override
-    public void reportAvailability(Slave slave) {
+    public void reportAvailability(Slave slave, Request request) {
 
         // for demo usage only System.out.println(slave.getAvailability() + Thread.currentThread().getName());
 

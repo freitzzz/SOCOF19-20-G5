@@ -18,7 +18,7 @@ public class TestSlaveHandler extends SlaveHandler {
 
 
     @Override
-    public void requestComputation(Request request) {
+    public void requestSlaves(Request request) {
 
     }
 
@@ -33,7 +33,7 @@ public class TestSlaveHandler extends SlaveHandler {
     }
 
     @Override
-    public void reportAvailability(Slave slave) {
+    public void reportAvailability(Slave slave, Request request) {
 
     }
 

@@ -1,5 +1,6 @@
 package slave;
 
+import datastructures.CodeExecutionRequest;
 import org.junit.Test;
 
 import datastructures.Request;
@@ -20,9 +21,9 @@ public class SlaveTest {
         List<Integer> l = new ArrayList<>();
         l.add(1); l.add(1);
 
-        Request r = new Request(l,1,Request.Operation.ADD);
+        CodeExecutionRequest r = new CodeExecutionRequest(l,1,CodeExecutionRequest.Operation.ADD);
 
-        s.compute(r, slaveHandler);
+        s.process(r, slaveHandler);
         assertEquals(slaveHandler.getResult(1).value,2);
     }
 
@@ -33,9 +34,9 @@ public class SlaveTest {
         List<Integer> l = new ArrayList<>();
         l.add(2); l.add(2);
 
-        Request r = new Request(l,2,Request.Operation.MULTIPLY);
+        CodeExecutionRequest r = new CodeExecutionRequest(l,2,CodeExecutionRequest.Operation.MULTIPLY);
 
-        s.compute(r, slaveHandler);
+        s.process(r, slaveHandler);
         assertEquals(slaveHandler.getResult(2).value,4);
     }
 
@@ -46,9 +47,9 @@ public class SlaveTest {
         List<Integer> l = new ArrayList<>();
         l.add(2); l.add(0);
 
-        Request r = new Request(l,3,Request.Operation.MULTIPLY);
+        CodeExecutionRequest r = new CodeExecutionRequest(l,3,CodeExecutionRequest.Operation.MULTIPLY);
 
-        s.compute(r, slaveHandler);
+        s.process(r, slaveHandler);
         assertEquals(slaveHandler.getResult(3).value,0);
     }
 
@@ -59,13 +60,13 @@ public class SlaveTest {
         List<Integer> l = new ArrayList<>();
         l.add(2); l.add(0);
 
-        Request r1 = new Request(l,4,Request.Operation.MULTIPLY);
-        Request r2 = new Request(l,5,Request.Operation.MULTIPLY);
-        Request r3 = new Request(l,6,Request.Operation.ADD);
+        CodeExecutionRequest r1 = new CodeExecutionRequest(l,4,CodeExecutionRequest.Operation.MULTIPLY);
+        CodeExecutionRequest r2 = new CodeExecutionRequest(l,5,CodeExecutionRequest.Operation.MULTIPLY);
+        CodeExecutionRequest r3 = new CodeExecutionRequest(l,6,CodeExecutionRequest.Operation.ADD);
 
-        s.compute(r1, slaveHandler);
-        s.compute(r2, slaveHandler);
-        s.compute(r3, slaveHandler);
+        s.process(r1, slaveHandler);
+        s.process(r2, slaveHandler);
+        s.process(r3, slaveHandler);
         assertEquals(slaveHandler.getResult(4).value,0);
         assertEquals(slaveHandler.getResult(5).value,0);
         assertEquals(slaveHandler.getResult(6).value,2);

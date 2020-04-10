@@ -1,6 +1,6 @@
 package datastructures.scheduler;
 
-import datastructures.Request;
+import datastructures.CodeExecutionRequest;
 import datastructures.handler.SlaveHandler;
 import slave.Slave;
 
@@ -10,7 +10,7 @@ import java.util.List;
 public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
 
     @Override
-    public void schedule(List<Slave> slaves, Request request, SlaveHandler slaveHandler) {
+    public void schedule(final List<Slave> slaves, final CodeExecutionRequest request, final SlaveHandler slaveHandler) {
 
         int startIndex = 0;
         double overallPerformance = 0;
@@ -27,7 +27,7 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
             if(i == slaves.size()-1){
                 List<Integer> numbersSlice = request.getNumbers().subList(startIndex, numbersSize);
 
-                slaves.get(i).compute(new Request(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
+                slaves.get(i).process(new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
                 break;
             }
 
@@ -47,7 +47,7 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
 
             List<Integer> numbersSlice = request.getNumbers().subList(startIndex, endIndex);
 
-            slaves.get(i).compute(new Request(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
+            slaves.get(i).process(new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
 
             if(endIndex == numbersSize){
                 break;

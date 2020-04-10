@@ -1,8 +1,6 @@
 package datastructures.handler;
 
-import datastructures.AvailabilityDetails;
-import datastructures.PerformanceDetails;
-import datastructures.Request;
+import datastructures.CodeExecutionRequest;
 import datastructures.scheduler.SlaveScheduler;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -21,7 +19,7 @@ public class LockBasedSlaveHandlerTest {
 
     private static final SlaveScheduler scheduler = mock(SlaveScheduler.class);
 
-    private static final Request request = mock(Request.class);
+    private static final CodeExecutionRequest codeExecutionRequest = mock(CodeExecutionRequest.class);
 
     private static final Master master = mock(Master.class);
 
@@ -43,52 +41,52 @@ public class LockBasedSlaveHandlerTest {
 
         reset(scheduler);
 
-        reset(request);
+        reset(codeExecutionRequest);
     }
     @Test
     public void ensureAllSlavesAreScheduledForComputeIfAllAllowAvailabilityReserveOnRequestComputation() {
 
         slaves.forEach(slave -> {
             when(slave.getAvailability()).thenReturn(new AtomicInteger(100));
-            when(slave.getAvailabilityReducePerCompute()).thenReturn(25);
+            when(slave.getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(25);
         });
 
         SlaveHandler slaveHandler = new LockBasedSlaveHandler(scheduler, master, slaves);
 
-        slaveHandler.requestComputation(request);
+        slaveHandler.requestSlaves(codeExecutionRequest);
 
         slaves.forEach(slave -> {
             verify(slave, times(1)).getAvailability();
-            verify(slave, times(1)).getAvailabilityReducePerCompute();
+            verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
         });
 
-        verify(scheduler, only()).schedule(slaves, request, slaveHandler);
+        verify(scheduler, only()).schedule(slaves, codeExecutionRequest, slaveHandler);
 
-        verify(master, never()).receiveRequestCouldNotBeScheduled(request);
+        verify(master, never()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
     }
     @Test
     public void ensureSlaveIsNotScheduledIfAvailabilityWasNotReserved() {
 
         when(slaves.get(0).getAvailability()).thenReturn(new AtomicInteger(100));
-        when(slaves.get(0).getAvailabilityReducePerCompute()).thenReturn(25);
+        when(slaves.get(0).getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(25);
 
         when(slaves.get(1).getAvailability()).thenReturn(new AtomicInteger(55));
-        when(slaves.get(1).getAvailabilityReducePerCompute()).thenReturn(25);
+        when(slaves.get(1).getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(25);
 
         // Third slave cannot be reserved (45 - 55 < 0)
 
         when(slaves.get(2).getAvailability()).thenReturn(new AtomicInteger(44));
-        when(slaves.get(2).getAvailabilityReducePerCompute()).thenReturn(55);
+        when(slaves.get(2).getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(55);
 
         when(slaves.get(3).getAvailability()).thenReturn(new AtomicInteger(100));
-        when(slaves.get(3).getAvailabilityReducePerCompute()).thenReturn(99);
+        when(slaves.get(3).getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(99);
 
         when(slaves.get(4).getAvailability()).thenReturn(new AtomicInteger(100));
-        when(slaves.get(4).getAvailabilityReducePerCompute()).thenReturn(100);
+        when(slaves.get(4).getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(100);
 
         SlaveHandler slaveHandler = new LockBasedSlaveHandler(scheduler, master, slaves);
 
-        slaveHandler.requestComputation(request);
+        slaveHandler.requestSlaves(codeExecutionRequest);
 
         List<Slave> expectedSlavesScheduledForCompute = new ArrayList<>();
 
@@ -99,15 +97,15 @@ public class LockBasedSlaveHandlerTest {
 
         expectedSlavesScheduledForCompute.forEach(slave -> {
             verify(slave, times(1)).getAvailability();
-            verify(slave, times(1)).getAvailabilityReducePerCompute();
+            verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
         });
 
         verify(slaves.get(2), times(1)).getAvailability();
-        verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute();
+        verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
 
-        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, request, slaveHandler);
+        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, codeExecutionRequest, slaveHandler);
 
-        verify(master, never()).receiveRequestCouldNotBeScheduled(request);
+        verify(master, never()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
     }
 
 

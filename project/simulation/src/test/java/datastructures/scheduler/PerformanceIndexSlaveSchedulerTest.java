@@ -1,5 +1,6 @@
 package datastructures.scheduler;
 
+import datastructures.CodeExecutionRequest;
 import datastructures.Request;
 import datastructures.handler.SlaveHandler;
 import org.junit.After;
@@ -20,7 +21,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
     final static List<Slave> slaves = new ArrayList<>();
 
-    final static Request request = mock(Request.class);
+    final static CodeExecutionRequest codeExecutionRequest = mock(CodeExecutionRequest.class);
 
     final static SlaveHandler slaveHandler = mock(SlaveHandler.class);
 
@@ -39,7 +40,7 @@ public class PerformanceIndexSlaveSchedulerTest {
         for(Slave s : slaves){
             reset(s);
         }
-        reset(request);
+        reset(codeExecutionRequest);
     }
 
     @Test
@@ -51,35 +52,35 @@ public class PerformanceIndexSlaveSchedulerTest {
         when(slaves.get(3).getPerformanceIndex()).thenReturn(4);
         when(slaves.get(4).getPerformanceIndex()).thenReturn(5);
 
-        Request requestToCompute = new Request(Arrays.asList(new Integer[]{1, 2 , 3, 4, 5}), 1, Request.Operation.ADD);
+        CodeExecutionRequest requestToCompute = new CodeExecutionRequest(Arrays.asList(new Integer[]{1, 2 , 3, 4, 5}), 1, CodeExecutionRequest.Operation.ADD);
 
-        when(request.getNumbers()).thenReturn(requestToCompute.getNumbers());
+        when(codeExecutionRequest.getNumbers()).thenReturn(requestToCompute.getNumbers());
 
-        when(request.getRequestID()).thenReturn(requestToCompute.getRequestID());
+        when(codeExecutionRequest.getRequestID()).thenReturn(requestToCompute.getRequestID());
 
-        when(request.getOp()).thenReturn(requestToCompute.getOp());
+        when(codeExecutionRequest.getOp()).thenReturn(requestToCompute.getOp());
 
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
-        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(0, 2),requestToCompute.getRequestID(),requestToCompute.getOp()));
-        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        expectedSlaveRequestsList.add(new CodeExecutionRequest(requestToCompute.getNumbers().subList(0, 2),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        expectedSlaveRequestsList.add(new CodeExecutionRequest(requestToCompute.getNumbers().subList(2, 5),requestToCompute.getRequestID(),requestToCompute.getOp()));
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        scheduler.schedule(slaves, request, slaveHandler);
+        scheduler.schedule(slaves, codeExecutionRequest, slaveHandler);
 
-        verify(request, times(1+2)).getNumbers();
+        verify(codeExecutionRequest, times(1+2)).getNumbers();
 
-        verify(request, times(2)).getRequestID();
+        verify(codeExecutionRequest, times(2)).getRequestID();
 
-        verify(request, times(2)).getOp();
+        verify(codeExecutionRequest, times(2)).getOp();
 
-        verify(slaves.get(3)).compute(expectedSlaveRequestsList.get(0), slaveHandler);
-        verify(slaves.get(4)).compute(expectedSlaveRequestsList.get(1), slaveHandler);
+        verify(slaves.get(3)).process(expectedSlaveRequestsList.get(0), slaveHandler);
+        verify(slaves.get(4)).process(expectedSlaveRequestsList.get(1), slaveHandler);
 
 
         for(int i = 0; i < 3; i++) {
-            verify(slaves.get(i),never()).compute(any(Request.class), any(SlaveHandler.class));
+            verify(slaves.get(i),never()).process(any(Request.class), any(SlaveHandler.class));
         }
 
     }
@@ -93,33 +94,33 @@ public class PerformanceIndexSlaveSchedulerTest {
         when(slaves.get(3).getPerformanceIndex()).thenReturn(0);
         when(slaves.get(4).getPerformanceIndex()).thenReturn(2);
 
-        Request requestToCompute = new Request(Arrays.asList(new Integer[]{1, 2 , 3}), 1, Request.Operation.ADD);
+        CodeExecutionRequest requestToCompute = new CodeExecutionRequest(Arrays.asList(new Integer[]{1, 2 , 3}), 1, CodeExecutionRequest.Operation.ADD);
 
-        when(request.getNumbers()).thenReturn(requestToCompute.getNumbers());
+        when(codeExecutionRequest.getNumbers()).thenReturn(requestToCompute.getNumbers());
 
-        when(request.getRequestID()).thenReturn(requestToCompute.getRequestID());
+        when(codeExecutionRequest.getRequestID()).thenReturn(requestToCompute.getRequestID());
 
-        when(request.getOp()).thenReturn(requestToCompute.getOp());
+        when(codeExecutionRequest.getOp()).thenReturn(requestToCompute.getOp());
 
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
-        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        expectedSlaveRequestsList.add(new CodeExecutionRequest(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        scheduler.schedule(slaves, request, slaveHandler);
+        scheduler.schedule(slaves, codeExecutionRequest, slaveHandler);
 
-        verify(request, times(1+1)).getNumbers();
+        verify(codeExecutionRequest, times(1+1)).getNumbers();
 
-        verify(request, times(1)).getRequestID();
+        verify(codeExecutionRequest, times(1)).getRequestID();
 
-        verify(request, times(1)).getOp();
+        verify(codeExecutionRequest, times(1)).getOp();
 
-        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0), slaveHandler);
+        verify(slaves.get(0)).process(expectedSlaveRequestsList.get(0), slaveHandler);
 
 
         for(int i = 1; i < 5; i++) {
-            verify(slaves.get(i),never()).compute(any(Request.class), any(SlaveHandler.class));
+            verify(slaves.get(i),never()).process(any(Request.class), any(SlaveHandler.class));
         }
 
     }
@@ -133,33 +134,33 @@ public class PerformanceIndexSlaveSchedulerTest {
         when(slaves.get(3).getPerformanceIndex()).thenReturn(0);
         when(slaves.get(4).getPerformanceIndex()).thenReturn(0);
 
-        Request requestToCompute = new Request(Arrays.asList(new Integer[]{1, 2 , 3}), 1, Request.Operation.ADD);
+        CodeExecutionRequest requestToCompute = new CodeExecutionRequest(Arrays.asList(new Integer[]{1, 2 , 3}), 1, CodeExecutionRequest.Operation.ADD);
 
-        when(request.getNumbers()).thenReturn(requestToCompute.getNumbers());
+        when(codeExecutionRequest.getNumbers()).thenReturn(requestToCompute.getNumbers());
 
-        when(request.getRequestID()).thenReturn(requestToCompute.getRequestID());
+        when(codeExecutionRequest.getRequestID()).thenReturn(requestToCompute.getRequestID());
 
-        when(request.getOp()).thenReturn(requestToCompute.getOp());
+        when(codeExecutionRequest.getOp()).thenReturn(requestToCompute.getOp());
 
         final List<Request> expectedSlaveRequestsList = new ArrayList<>();
 
-        expectedSlaveRequestsList.add(new Request(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
+        expectedSlaveRequestsList.add(new CodeExecutionRequest(requestToCompute.getNumbers(),requestToCompute.getRequestID(),requestToCompute.getOp()));
 
         PerformanceIndexSlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
-        scheduler.schedule(slaves, request, slaveHandler);
+        scheduler.schedule(slaves, codeExecutionRequest, slaveHandler);
 
-        verify(request, times(1+1)).getNumbers();
+        verify(codeExecutionRequest, times(1+1)).getNumbers();
 
-        verify(request, times(1)).getRequestID();
+        verify(codeExecutionRequest, times(1)).getRequestID();
 
-        verify(request, times(1)).getOp();
+        verify(codeExecutionRequest, times(1)).getOp();
 
-        verify(slaves.get(0)).compute(expectedSlaveRequestsList.get(0), slaveHandler);
+        verify(slaves.get(0)).process(expectedSlaveRequestsList.get(0), slaveHandler);
 
 
         for(int i = 1; i < 5; i++) {
-            verify(slaves.get(i),never()).compute(any(Request.class), any(SlaveHandler.class));
+            verify(slaves.get(i),never()).process(any(Request.class), any(SlaveHandler.class));
         }
 
     }
@@ -180,10 +181,10 @@ public class PerformanceIndexSlaveSchedulerTest {
             slaves.add(slave);
 
             doAnswer(invocation -> {
-                Request request = invocation.getArgument(0);
+                CodeExecutionRequest request = (CodeExecutionRequest)invocation.getArgument(0);
                 numbersInvokedCount.addAndGet(request.getNumbers().size());
                 return null;
-            }).when(slaves.get(i)).compute(any(Request.class), any(SlaveHandler.class));
+            }).when(slaves.get(i)).process(any(Request.class), any(SlaveHandler.class));
 
         }
 
@@ -203,13 +204,13 @@ public class PerformanceIndexSlaveSchedulerTest {
 
             }
 
-            when(request.getRequestID()).thenReturn(1);
+            when(codeExecutionRequest.getRequestID()).thenReturn(1);
 
-            when(request.getOp()).thenReturn(Request.Operation.ADD);
+            when(codeExecutionRequest.getOp()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
-            when(request.getNumbers()).thenReturn(requestNumbers);
+            when(codeExecutionRequest.getNumbers()).thenReturn(requestNumbers);
 
-            scheduler.schedule(slaves, request, slaveHandler);
+            scheduler.schedule(slaves, codeExecutionRequest, slaveHandler);
 
             Assert.assertEquals(requestNumbersSize, numbersInvokedCount.get());
 

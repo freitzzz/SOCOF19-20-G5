@@ -1,9 +1,6 @@
 package datastructures.handler;
 
-import datastructures.AvailabilityDetails;
-import datastructures.PerformanceDetails;
-import datastructures.Request;
-import datastructures.Result;
+import datastructures.*;
 import datastructures.list.LockFreeList;
 import datastructures.map.LockFreeMap;
 import datastructures.scheduler.SlaveScheduler;
@@ -26,14 +23,14 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     @Override
-    public void requestComputation(final Request request) {
+    public void requestSlaves(final Request request) {
         List<Slave> availableSlaves = slaves
                 .parallelStream()
-                .filter(this::tryReserveSlaveAvailability)
+                .filter(slave -> tryReserveSlaveAvailability(slave, request))
                 .collect(Collectors.toList());
         if(availableSlaves.size() > 0) {
             computationResults.put(request.getRequestID(), new LockFreeList<>(availableSlaves.size()));
-            super.scheduler.schedule(availableSlaves, request, this);
+            super.scheduler.schedule(availableSlaves, (CodeExecutionRequest)request, this);
         } else {
             super.master.receiveRequestCouldNotBeScheduled(request);
         }
@@ -44,7 +41,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         final LockFreeList<Result> results = computationResults.get(result.getRequestID());
         results.add(result);
         if (results.hasReachedMaxSize()) {
-            final int finalResultSum = results.parallelStream().mapToInt(result1 -> result1.getValue()).sum();
+            final int finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
             Result finalResult = new Result(finalResultSum, result.getRequestID());
             computationResults.remove(result.getRequestID());
             super.master.receiveResult(finalResult);
@@ -61,9 +58,9 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     @Override
-    public void reportAvailability(Slave slave) {
+    public void reportAvailability(Slave slave, Request request) {
 
-        if(tryUnreserveSlaveAvailability(slave)) {
+        if(tryUnreserveSlaveAvailability(slave, request)) {
             final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
 
             super.master.receiveSlaveAvailability(details);
@@ -71,10 +68,10 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     }
 
-    private boolean tryReserveSlaveAvailability(final Slave slave) {
+    private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {
         boolean reserved = false;
         final int currentSlaveAvailability  = slave.getAvailability().get();
-        final int slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute();
+        final int slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
         if(slaveAvailabilityAfterCompute >= 0) {
 
             reserved = slave.getAvailability().compareAndSet(currentSlaveAvailability, slaveAvailabilityAfterCompute);
@@ -83,10 +80,10 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         return reserved;
     }
 
-    private boolean tryUnreserveSlaveAvailability(final Slave slave) {
+    private boolean tryUnreserveSlaveAvailability(final Slave slave, final Request request) {
         boolean unreserved = false;
         final int currentSlaveAvailability  = slave.getAvailability().get();
-        final int slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute();
+        final int slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
         if(slaveAvailabilityAfterCompute <= 100) {
 
             unreserved = slave.getAvailability().compareAndSet(currentSlaveAvailability, slaveAvailabilityAfterCompute);

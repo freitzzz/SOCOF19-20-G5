@@ -1,5 +1,6 @@
 package slave;
 
+import datastructures.CodeExecutionRequest;
 import datastructures.Request;
 import datastructures.Result;
 import datastructures.handler.SlaveHandler;
@@ -10,14 +11,11 @@ public class ComputeThread extends Thread {
 
     private List<Integer> numbers;
     private SlaveHandler slaveMemory;
-    private Request.Operation op;
-    private int requestID;
+    private CodeExecutionRequest request;
     private Slave s;
 
-    public ComputeThread(Request r, SlaveHandler slaveMemory,Slave s){
+    public ComputeThread(CodeExecutionRequest r, SlaveHandler slaveMemory,Slave s){
         this.numbers= r.getNumbers();
-        this.op = r.getOp();
-        this.requestID = r.getRequestID();
         this.slaveMemory = slaveMemory;
         this.s = s;
     }
@@ -27,16 +25,16 @@ public class ComputeThread extends Thread {
         super.run();
 
         Integer res;
-        switch(op){
+        switch(request.getOp()){
             case ADD: res = sum(); break;
             case MULTIPLY: res = mult(); break;
             default: throw new IllegalArgumentException("Operation unknown");
         }
 
-        Result r = new Result(res,requestID);
+        Result r = new Result(res,request.getRequestID());
 
         slaveMemory.pushResult(r);
-        slaveMemory.reportAvailability(s);
+        slaveMemory.reportAvailability(s, request);
     }
 
     private int sum() {

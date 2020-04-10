@@ -15,14 +15,16 @@ import java.util.stream.Collectors;
 
 public class LockFreeSlaveHandler extends SlaveHandler {
 
-    private final LockFreeList<Slave> slaves;
+    public final LockFreeList<Slave> slaves;
 
     private final LockFreeMap<Integer, LockFreeList<Result>> computationResults = new LockFreeMap<>();
 
-    public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
+    public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Integer> slavesPerformanceIndex) {
         super(scheduler, master);
-        this.slaves = new LockFreeList<>(slaves.size());
-        this.slaves.addAll(slaves);
+        this.slaves = new LockFreeList<>(slavesPerformanceIndex.size());
+        for(int i = 0; i < slavesPerformanceIndex.size(); i++) {
+            this.slaves.add(new Slave(slavesPerformanceIndex.get(i), this));
+        }
     }
 
     @Override
@@ -46,6 +48,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         if (results.hasReachedMaxSize()) {
             final int finalResultSum = results.parallelStream().mapToInt(result1 -> result1.getValue()).sum();
             Result finalResult = new Result(finalResultSum, result.getRequestID());
+            computationResults.remove(result.getRequestID());
             super.master.receiveResult(finalResult);
         }
     }

@@ -18,7 +18,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     private LockBasedMap<Integer, LockBasedList<Result>> computationResults = new LockBasedMap<>();
 
 
-    public LockBasedSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
+    public LockBasedSlaveHandler(final SlaveScheduler scheduler, final Master master,  final List<Slave> slaves) {
         super(scheduler, master);
         this.slaves = new LockBasedList<>(slaves.size());
         this.slaves.addAll(slaves);
@@ -37,14 +37,19 @@ public class LockBasedSlaveHandler extends SlaveHandler{
                 currentSlaveAvailability  = slave.getAvailability().get();
                 slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
                 if(slaveAvailabilityAfterCompute >= 0) {
-                    //add slave to availableSlaves List if the slave is available
                     availableSlaves.add(slave);
                 }
             }
-            //if availableSlaves > 0 then computationResults.put(request.getRequestID(), new LockBasedList<>()) and scheduler.schedule(availableSlaves, request)
             if(availableSlaves.size() > 0){
-                computationResults.put(request.getRequestID(), new LockBasedList<>(availableSlaves.size()));
-                super.scheduler.schedule(availableSlaves, (CodeExecutionRequest)request, this);
+
+                if(request instanceof CodeExecutionRequest) {
+                    computationResults.put(request.getRequestID(), new LockBasedList<>(availableSlaves.size()));
+                    super.scheduler.schedule(availableSlaves, (CodeExecutionRequest) request, this);
+                } else {
+                    slaves.forEach(slave -> slave.process(request, this));
+                }
+            } else {
+                super.master.receiveRequestCouldNotBeScheduled(request);
             }
         } finally {
             System.out.println("Request added" + Thread.currentThread().getName());
@@ -62,29 +67,32 @@ public class LockBasedSlaveHandler extends SlaveHandler{
                 finalResultSum = finalResultSum + res.getValue();
             }
             Result finalResult = new Result(finalResultSum, result.getRequestID());
+            computationResults.remove(result.getRequestID());
             super.master.receiveResult(finalResult);
         }
     }
 
     @Override
     public void reportPerformance(Slave slave) {
-
-        // for demo usage only System.out.println(slave.getPerformanceIndex() + Thread.currentThread().getName());
-
         final PerformanceDetails details = new PerformanceDetails(slave, slave.getPerformanceIndex());
-
         super.master.receiveSlavePerformanceDetails(details);
-
     }
 
     @Override
     public void reportAvailability(Slave slave, Request request) {
+        int slaveAvailabilityAfterCompute = 0;
+        int currentSlaveAvailability = 0;
+        lock.lock();
+        try {
+            currentSlaveAvailability  = slave.getAvailability().get();
+            slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
+            if(slaveAvailabilityAfterCompute <= 100) {
+                final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
+                super.master.receiveSlaveAvailability(details);
+            }
 
-        // for demo usage only System.out.println(slave.getAvailability() + Thread.currentThread().getName());
-
-        final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
-
-        super.master.receiveSlaveAvailability(details);
-
+        } finally {
+            lock.unlock();
+        }
     }
 }

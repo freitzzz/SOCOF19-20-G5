@@ -24,4 +24,9 @@ public abstract class SlaveHandler {
     public abstract void pushResult(Result result);
     public abstract void reportPerformance(Slave slave);
     public abstract void reportAvailability(Slave slave, Request request);
+
+    public enum Type {
+        LOCK_BASED,
+        LOCK_FREE
+    }
 }

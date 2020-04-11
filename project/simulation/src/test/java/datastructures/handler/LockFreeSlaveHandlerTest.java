@@ -268,7 +268,7 @@ public class LockFreeSlaveHandlerTest {
 
         List<Slave> slaves = new ArrayList<>();
 
-        Master master = spy(Master.class);
+        Master master = mock(Master.class);
 
         SlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 

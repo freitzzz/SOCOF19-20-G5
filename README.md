@@ -19,6 +19,7 @@ As observed in the diagram, besides the concepts that were knew previously, ther
 ## Slave Node Implementation (Part 1)
 
 
+## Master Node Implementation (Part 2)
 
 ### Load balancing algorithm
 
@@ -55,10 +56,6 @@ if(numbersSize-endIndex < 2){
 In the flowchart below it is possible to observe the process described above that defines this load balancing algorithm.
 
 ![](diagrams/res/PerformanceIndexSlaveScheduler.png)
-
-
-
-## Master Node Implementation (Part 2)
 
 ## System Integration and Analysis (Part 3)
 

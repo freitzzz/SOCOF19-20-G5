@@ -30,7 +30,6 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         int slaveAvailabilityAfterCompute = 0;
         int currentSlaveAvailability = 0;
         List<Slave> availableSlaves = new ArrayList<>();
-
         lock.lock();
         try{
             for(Slave slave : slaves){
@@ -52,7 +51,6 @@ public class LockBasedSlaveHandler extends SlaveHandler{
                 super.master.receiveRequestCouldNotBeScheduled(request);
             }
         } finally {
-            System.out.println("Request added" + Thread.currentThread().getName());
             lock.unlock();
         }
     }
@@ -60,16 +58,23 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     @Override
     public void pushResult(Result result) {
         int finalResultSum = 0;
-        final LockBasedList<Result> results = computationResults.get(result.getRequestID());
-        results.add(result);
-        if (results.hasReachedMaxSize()) {
-            for(Result res : results){
-                finalResultSum = finalResultSum + res.getValue();
+        lock.lock();
+        try {
+            final LockBasedList<Result> results = computationResults.get(result.getRequestID());
+            results.add(result);
+            if (results.hasReachedMaxSize()) {
+                for(Result res : results){
+                    finalResultSum = finalResultSum + res.getValue();
+                }
+                Result finalResult = new Result(finalResultSum, result.getRequestID());
+                computationResults.remove(result.getRequestID());
+                super.master.receiveResult(finalResult);
             }
-            Result finalResult = new Result(finalResultSum, result.getRequestID());
-            computationResults.remove(result.getRequestID());
-            super.master.receiveResult(finalResult);
+
+        } finally {
+            lock.unlock();
         }
+
     }
 
     @Override

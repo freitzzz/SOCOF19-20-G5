@@ -4,7 +4,6 @@ import datastructures.*;
 import datastructures.list.LockFreeList;
 import datastructures.map.LockFreeMap;
 import datastructures.scheduler.SlaveScheduler;
-import jdk.dynalink.Operation;
 import master.Master;
 import slave.Slave;
 
@@ -84,6 +83,8 @@ public class LockFreeSlaveHandler extends SlaveHandler {
             final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
 
             super.master.receiveSlaveAvailability(details);
+        } else {
+            reportAvailability(slave, request);
         }
 
     }

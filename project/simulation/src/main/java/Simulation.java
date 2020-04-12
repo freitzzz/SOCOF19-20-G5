@@ -1,7 +1,6 @@
 import master.Master;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 public class Simulation {
 
@@ -442,7 +441,8 @@ public class Simulation {
         public void show(final Cli cli) {
             String content = "Welcome to debug mode. The available options are the following:\n" +
                     "1 - Print all slaves performance index\n" +
-                    "2 - Print all slaves availability\n";
+                    "2 - Print all slaves availability\n" +
+                    "3 - Print slave handler status\n";
 
             System.out.print(content);
 
@@ -459,6 +459,9 @@ public class Simulation {
                         break;
                     case "2":
                         master.connectedSlaves.forEach(slave -> System.out.println(slave.getAvailability()));
+                        break;
+                    case "3":
+                        System.out.println(master.slaveHandler);
                         break;
                     case "h":
                         nextPage = new InitialPage();

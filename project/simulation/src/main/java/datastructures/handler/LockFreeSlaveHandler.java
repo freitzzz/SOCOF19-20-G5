@@ -112,4 +112,12 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         }
         return unreserved;
     }
+
+    @Override
+    public String toString() {
+        return "LockFreeSlaveHandler{" +
+                "slaves=" + slaves +
+                ", computationResults=" + computationResults +
+                '}';
+    }
 }

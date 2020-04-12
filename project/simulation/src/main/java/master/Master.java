@@ -8,6 +8,8 @@ import datastructures.scheduler.PerformanceIndexSlaveScheduler;
 import datastructures.scheduler.SlaveScheduler;
 import slave.Slave;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +19,7 @@ public class Master {
 
     private final ExecutorService executor;
 
-    private final SlaveHandler slaveHandler;
+    public final SlaveHandler slaveHandler;
 
     private volatile int requestPerformed = 0;
 
@@ -41,14 +43,13 @@ public class Master {
 
     public void receiveResult(final Result result) {
         System.out.printf("Received result of code execution request #%d:\n\t- Result: %d\n", result.getRequestID(), result.getValue());
-
     }
 
     public void receiveRequestCouldNotBeScheduled(final Request request) {
 
         System.out.printf("Request #%d could not be scheduled, scheduling again in %d milliseconds\n", request.getRequestID(), 5000);
 
-        executor.submit(() -> {
+        executor.execute(() -> {
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -84,7 +85,7 @@ public class Master {
 
     public void requestSumOfNumbers(final List<Integer> numbers) {
 
-        executor.submit(() -> {
+        executor.execute(() -> {
             slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, requestPerformed++, CodeExecutionRequest.Operation.ADD));
         });
 
@@ -92,7 +93,7 @@ public class Master {
 
     public void requestMultiplicationOfNumbers(final List<Integer> numbers) {
 
-        executor.submit(() -> {
+        executor.execute(() -> {
             slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, requestPerformed++, CodeExecutionRequest.Operation.MULTIPLY));
         });
 
@@ -100,7 +101,7 @@ public class Master {
 
     public void requestSlavesPerformanceIndex() {
 
-        executor.submit(() -> {
+        executor.execute(() -> {
             slaveHandler.requestSlaves(new ReportPerformanceIndexRequest(requestPerformed++));
         });
 

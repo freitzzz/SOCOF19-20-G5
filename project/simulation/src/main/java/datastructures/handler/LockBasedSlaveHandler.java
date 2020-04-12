@@ -37,6 +37,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
                 slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
                 if(slaveAvailabilityAfterCompute >= 0) {
                     availableSlaves.add(slave);
+                    slave.getAvailability().set(slaveAvailabilityAfterCompute);
                 }
             }
             if(availableSlaves.size() > 0){
@@ -100,11 +101,23 @@ public class LockBasedSlaveHandler extends SlaveHandler{
             slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
             if(slaveAvailabilityAfterCompute <= 100) {
                 final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
+                slave.getAvailability().set(slaveAvailabilityAfterCompute);
                 super.master.receiveSlaveAvailability(details);
+            } else {
+                reportAvailability(slave, request);
             }
 
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "LockBasedSlaveHandler{" +
+                "lock=" + lock +
+                ", slaves=" + slaves +
+                ", computationResults=" + computationResults +
+                '}';
     }
 }

@@ -30,7 +30,6 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         int slaveAvailabilityAfterCompute = 0;
         int currentSlaveAvailability = 0;
         List<Slave> availableSlaves = new ArrayList<>();
-
         lock.lock();
         try{
             for(Slave slave : slaves){
@@ -52,32 +51,36 @@ public class LockBasedSlaveHandler extends SlaveHandler{
                 super.master.receiveRequestCouldNotBeScheduled(request);
             }
         } finally {
-            System.out.println("Request added" + Thread.currentThread().getName());
             lock.unlock();
         }
     }
 
     @Override
     public void pushResult(Result result) {
-        final LockBasedList<Result> results = computationResults.get(result.getRequestID());
-        results.add(result);
-        if (results.hasReachedMaxSize()) {
-            final int finalResultSum;
-            Result finalResult;
-            switch(result.getOperation()){
-                case ADD:
-                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
-                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
-                    break;
-                case MULTIPLY:
-                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1,(i, i1) -> i*i1);
-                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown operation");
+        lock.lock();
+        try{
+            final LockBasedList<Result> results = computationResults.get(result.getRequestID());
+            results.add(result);
+            if (results.hasReachedMaxSize()) {
+                final int finalResultSum;
+                Result finalResult;
+                switch (result.getOperation()) {
+                    case ADD:
+                        finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
+                        finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
+                        break;
+                    case MULTIPLY:
+                        finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1, (i, i1) -> i * i1);
+                        finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown operation");
+                }
+                computationResults.remove(result.getRequestID());
+                super.master.receiveResult(finalResult);
             }
-            computationResults.remove(result.getRequestID());
-            super.master.receiveResult(finalResult);
+        } finally {
+            lock.unlock();
         }
     }
 

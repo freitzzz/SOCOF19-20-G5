@@ -5,6 +5,7 @@ import java.util.Objects;
 public class Result {
     public final int value;
     public final int requestID;
+    public final CodeExecutionRequest.Operation op;
 
     public int getValue() {
         return value;
@@ -14,10 +15,13 @@ public class Result {
         return requestID;
     }
 
+    public CodeExecutionRequest.Operation getOperation(){ return op;}
 
-    public Result(int value, int requestID) {
+
+    public Result(int value, int requestID, CodeExecutionRequest.Operation op) {
         this.value = value;
         this.requestID = requestID;
+        this.op = op;
     }
 
     @Override
@@ -31,6 +35,6 @@ public class Result {
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, requestID);
+        return Objects.hash(value, requestID,op);
     }
 }

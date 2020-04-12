@@ -4,6 +4,7 @@ import datastructures.*;
 import datastructures.list.LockFreeList;
 import datastructures.map.LockFreeMap;
 import datastructures.scheduler.SlaveScheduler;
+import jdk.dynalink.Operation;
 import master.Master;
 import slave.Slave;
 
@@ -48,8 +49,20 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         final LockFreeList<Result> results = computationResults.get(result.getRequestID());
         results.add(result);
         if (results.hasReachedMaxSize()) {
-            final int finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
-            Result finalResult = new Result(finalResultSum, result.getRequestID());
+            final int finalResultSum;
+            Result finalResult;
+            switch(result.getOperation()){
+                case ADD:
+                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
+                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
+                    break;
+                case MULTIPLY:
+                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1,(i, i1) -> i*i1);
+                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown operation");
+            }
             computationResults.remove(result.getRequestID());
             super.master.receiveResult(finalResult);
         }

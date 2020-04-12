@@ -172,6 +172,7 @@ public class LockBasedSlaveHandlerTest {
         Result result = mock(Result.class);
 
         when(result.getRequestID()).thenReturn(1);
+        when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
         // don't push the result of the last slave
 
@@ -212,6 +213,8 @@ public class LockBasedSlaveHandlerTest {
 
         when(result.getRequestID()).thenReturn(1);
 
+        when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
+
         when(result.getValue()).thenReturn(1);
 
         // don't push the result of the last slave
@@ -220,7 +223,7 @@ public class LockBasedSlaveHandlerTest {
             slaveHandler.pushResult(result);
         }
 
-        Result finalResult = new Result(slaves.size() * 1, 1);
+        Result finalResult = new Result(slaves.size() * 1, 1,CodeExecutionRequest.Operation.ADD);
 
         verify(master, only()).receiveResult(finalResult);
     }
@@ -264,7 +267,7 @@ public class LockBasedSlaveHandlerTest {
 
         List<Slave> slaves = new ArrayList<>();
 
-        Master master = spy(Master.class);
+        Master master = mock(Master.class);
 
         SlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
 
@@ -278,7 +281,7 @@ public class LockBasedSlaveHandlerTest {
 
         final List<Integer> values = new ArrayList<>();
 
-        for(int i = 0; i < 100000; i++) {
+        for(int i = 0; i < 1000; i++) {
             values.add(i);
         }
 

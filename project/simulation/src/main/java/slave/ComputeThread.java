@@ -32,7 +32,7 @@ public class ComputeThread extends Thread {
             default: throw new IllegalArgumentException("Operation unknown");
         }
 
-        Result r = new Result(res,request.getRequestID());
+        Result r = new Result(res,request.getRequestID(),request.getOp());
 
         slaveMemory.pushResult(r);
         slaveMemory.reportAvailability(s, request);

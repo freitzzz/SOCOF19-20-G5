@@ -59,14 +59,23 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     @Override
     public void pushResult(Result result) {
-        int finalResultSum = 0;
         final LockBasedList<Result> results = computationResults.get(result.getRequestID());
         results.add(result);
         if (results.hasReachedMaxSize()) {
-            for(Result res : results){
-                finalResultSum = finalResultSum + res.getValue();
+            final int finalResultSum;
+            Result finalResult;
+            switch(result.getOperation()){
+                case ADD:
+                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
+                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
+                    break;
+                case MULTIPLY:
+                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1,(i, i1) -> i*i1);
+                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown operation");
             }
-            Result finalResult = new Result(finalResultSum, result.getRequestID());
             computationResults.remove(result.getRequestID());
             super.master.receiveResult(finalResult);
         }

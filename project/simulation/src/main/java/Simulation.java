@@ -1,6 +1,7 @@
 import master.Master;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class Simulation {
 
@@ -300,19 +301,19 @@ public class Simulation {
 
                 switch (input) {
                     case "1":
-                        master.requestSumOfNumbers(randomSequenceOfNumbers());
+                        master.requestSumOfNumbers(randomSequenceOfNumbers("SUM"));
                         break;
                     case "2":
-                        master.requestMultiplicationOfNumbers(randomSequenceOfNumbers());
+                        master.requestMultiplicationOfNumbers(randomSequenceOfNumbers("MUL"));
                         break;
                     case "3":
                         for(int i = 0; i < 500; i++) {
-                            master.requestSumOfNumbers(randomSequenceOfNumbers());
+                            master.requestSumOfNumbers(randomSequenceOfNumbers("SUM"));
                         }
                         break;
                     case "4":
                         for(int i = 0; i < 500; i++) {
-                            master.requestMultiplicationOfNumbers(randomSequenceOfNumbers());
+                            master.requestMultiplicationOfNumbers(randomSequenceOfNumbers("MUL"));
                         }
                         break;
                     case "5":
@@ -332,17 +333,35 @@ public class Simulation {
             cli.build(nextPage);
         }
 
-        private List<Integer> randomSequenceOfNumbers() {
+        private List<Integer> randomSequenceOfNumbers(String op) {
 
             final List<Integer> toCalculate = new ArrayList<>();
 
-            final int size = new Random().nextInt(50000);
+            final int size;
+            if(op == "MUL"){
+                size = new Random().nextInt(12);
+            }else{
+                size = new Random().nextInt(1000);
+            }
 
-            for(int j = 0; j < size; j++) {
+
+            for(int j = 1; j < size; j++) {
 
                 toCalculate.add(j);
 
             }
+            int expected;
+            switch(op){
+                case "SUM":
+                    expected = toCalculate.stream().reduce(0,(integer, integer2) -> integer+integer2);
+                    break;
+                case "MUL":
+                    expected = toCalculate.stream().reduce(1,(integer, integer2) -> integer*integer2);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown operation");
+            }
+            System.out.println("Excepted result = " + expected);
 
             return toCalculate;
 

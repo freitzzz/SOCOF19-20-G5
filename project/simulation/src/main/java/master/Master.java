@@ -93,7 +93,7 @@ public class Master {
     public void requestMultiplicationOfNumbers(final List<Integer> numbers) {
 
         executor.submit(() -> {
-            slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, requestPerformed++, CodeExecutionRequest.Operation.ADD));
+            slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, requestPerformed++, CodeExecutionRequest.Operation.MULTIPLY));
         });
 
     }

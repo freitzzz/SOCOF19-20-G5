@@ -176,6 +176,7 @@ public class LockFreeSlaveHandlerTest {
         Result result = mock(Result.class);
 
         when(result.getRequestID()).thenReturn(1);
+        when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
         // don't push the result of the last slave
 
@@ -217,6 +218,7 @@ public class LockFreeSlaveHandlerTest {
         when(result.getRequestID()).thenReturn(1);
 
         when(result.getValue()).thenReturn(1);
+        when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
         // don't push the result of the last slave
 
@@ -224,7 +226,7 @@ public class LockFreeSlaveHandlerTest {
             slaveHandler.pushResult(result);
         }
 
-        Result finalResult = new Result(slaves.size() * 1, 1);
+        Result finalResult = new Result(slaves.size() * 1, 1,CodeExecutionRequest.Operation.ADD);
 
         verify(master, only()).receiveResult(finalResult);
     }

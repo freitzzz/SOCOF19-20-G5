@@ -66,7 +66,7 @@ public class Simulation {
             final Scanner scanner = cli.getScanner();
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 switch (input) {
                     case "1":
@@ -121,7 +121,7 @@ public class Simulation {
             final Scanner scanner = cli.getScanner();
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 switch (input) {
                     case "1":
@@ -183,7 +183,7 @@ public class Simulation {
             final Scanner scanner = cli.getScanner();
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 int chosenNumber = -1;
 
@@ -241,7 +241,7 @@ public class Simulation {
             System.out.print(content);
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 int chosenNumber = -1;
 
@@ -290,14 +290,14 @@ public class Simulation {
             String content = "Welcome to simulation mode. The available options are the following:\n" +
                     "1 - Request slaves to calculate sum of random numbers\n" +
                     "2 - Request slaves to calculate multiplication of random numbers\n" +
-                    "3 - Request slaves to calculate sum of random numbers 500 times\n" +
-                    "4 - Request slaves to calculate multiplication of random numbers 500 times\n" +
+                    "3 - Request slaves to calculate sum of random numbers 100 times\n" +
+                    "4 - Request slaves to calculate multiplication of random numbers 100 times\n" +
                     "5 - Request slaves to report their performance index\n";
 
             System.out.print(content);
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 switch (input) {
                     case "1":
@@ -307,12 +307,12 @@ public class Simulation {
                         master.requestMultiplicationOfNumbers(randomSequenceOfNumbers("MUL"));
                         break;
                     case "3":
-                        for(int i = 0; i < 500; i++) {
+                        for(int i = 0; i < 100; i++) {
                             master.requestSumOfNumbers(randomSequenceOfNumbers("SUM"));
                         }
                         break;
                     case "4":
-                        for(int i = 0; i < 500; i++) {
+                        for(int i = 0; i < 100; i++) {
                             master.requestMultiplicationOfNumbers(randomSequenceOfNumbers("MUL"));
                         }
                         break;
@@ -399,7 +399,7 @@ public class Simulation {
             System.out.print(content);
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 int chosenNumber = -1;
 
@@ -451,7 +451,7 @@ public class Simulation {
             final Scanner scanner = cli.getScanner();
 
             while(nextPage == null) {
-                String input = scanner.next();
+                String input = scanner.nextLine();
 
                 switch (input) {
                     case "1":

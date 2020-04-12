@@ -57,7 +57,7 @@ public class Simulation {
                "1 - Build a new master for simulation\n" +
                "2 - Start a simulation\n" +
                "3 - Debug mode\n" +
-               "You can, at any time, go back to this menu by pressing the key 'h'\n";
+               "You can, at any time, go back to this menu by pressing the key 'h' and show again the page you are on with the key 'r'\n";
             System.out.print(content);
 
             Page nextPage = null;
@@ -75,10 +75,13 @@ public class Simulation {
                         nextPage = new StartSimulationPage();
                         break;
                     case "3":
-                        nextPage = new DebugModePage();
+                        nextPage = new StartDebugModePage();
                         break;
                     case "h":
                         nextPage = new InitialPage();
+                        break;
+                    case "r":
+                        nextPage = this;
                         break;
                     default:
                         System.out.println("\nInvalid option");
@@ -147,6 +150,9 @@ public class Simulation {
                     case "h":
                         nextPage = new InitialPage();
                         break;
+                    case "r":
+                        nextPage = this;
+                        break;
                     default:
                         System.out.println("\nInvalid option");
                 }
@@ -178,11 +184,11 @@ public class Simulation {
             while(nextPage == null) {
                 String input = scanner.next();
 
-                Integer chosenNumber = -1;
+                int chosenNumber = -1;
 
                 try{
                     chosenNumber = Integer.parseInt(input);
-                }catch (Exception e) {
+                }catch (Exception ignored) {
 
                 }
 
@@ -192,6 +198,8 @@ public class Simulation {
                     nextPage = new MasterBuilderPage(builder);
                 } else if(input.equals("h")) {
                     nextPage = new InitialPage();
+                } else if(input.equals("r")) {
+                    nextPage = this;
                 } else {
                     System.out.println("\nInvalid Option");
                 }
@@ -223,7 +231,7 @@ public class Simulation {
                 builder.append("Choose a master:\n");
 
                 for(int i = 0; i < masters.size(); i++) {
-                    builder.append(String.format("%c - %s\n", i + 1,masters.get(i)));
+                    builder.append(String.format("%c - %s\n", 48 + i + 1,masters.get(i)));
                 }
 
                 content = builder.toString();
@@ -234,7 +242,7 @@ public class Simulation {
             while(nextPage == null) {
                 String input = scanner.next();
 
-                Integer chosenNumber = -1;
+                int chosenNumber = -1;
 
                 try{
                     chosenNumber = Integer.parseInt(input);
@@ -251,6 +259,8 @@ public class Simulation {
                     }
                 } else if(input.equals("h")) {
                     nextPage = new InitialPage();
+                } else if(input.equals("r")) {
+                    nextPage = this;
                 } else {
                     System.out.println("\nInvalid Option");
                 }
@@ -279,7 +289,9 @@ public class Simulation {
             String content = "Welcome to simulation mode. The available options are the following:\n" +
                     "1 - Request slaves to calculate sum of random numbers\n" +
                     "2 - Request slaves to calculate multiplication of random numbers\n" +
-                    "3 - Request slaves to report their performance index\n";
+                    "3 - Request slaves to calculate sum of random numbers 500 times\n" +
+                    "4 - Request slaves to calculate multiplication of random numbers 500 times\n" +
+                    "5 - Request slaves to report their performance index\n";
 
             System.out.print(content);
 
@@ -294,10 +306,23 @@ public class Simulation {
                         master.requestMultiplicationOfNumbers(randomSequenceOfNumbers());
                         break;
                     case "3":
+                        for(int i = 0; i < 500; i++) {
+                            master.requestSumOfNumbers(randomSequenceOfNumbers());
+                        }
+                        break;
+                    case "4":
+                        for(int i = 0; i < 500; i++) {
+                            master.requestMultiplicationOfNumbers(randomSequenceOfNumbers());
+                        }
+                        break;
+                    case "5":
                         master.requestSlavesPerformanceIndex();
                         break;
                     case "h":
                         nextPage = new InitialPage();
+                        break;
+                    case "r":
+                        nextPage = this;
                         break;
                     default:
                         System.out.println("\nInvalid option");
@@ -325,7 +350,74 @@ public class Simulation {
 
     }
 
+    private static class StartDebugModePage implements Page {
+
+        @Override
+        public void show(final Cli cli) {
+
+            String content;
+
+            Page nextPage = null;
+
+            final Scanner scanner = cli.getScanner();
+
+            final List<Master> masters = cli.getMasters();
+
+            if(cli.getMasters().isEmpty()) {
+                content = "You haven't build no masters.\n";
+            } else {
+                StringBuilder builder = new StringBuilder();
+
+                builder.append("Choose a master:\n");
+
+                for(int i = 0; i < masters.size(); i++) {
+                    builder.append(String.format("%c - %s\n", 48 + i + 1,masters.get(i)));
+                }
+
+                content = builder.toString();
+            }
+
+            System.out.print(content);
+
+            while(nextPage == null) {
+                String input = scanner.next();
+
+                int chosenNumber = -1;
+
+                try{
+                    chosenNumber = Integer.parseInt(input);
+                }catch (Exception e) {
+
+                }
+
+                if(chosenNumber != -1){
+                    if(chosenNumber <= masters.size()) {
+                        final Master selectedMaster = masters.get(chosenNumber - 1);
+                        nextPage = new DebugModePage(selectedMaster);
+                    } else {
+                        System.out.println("\nInvalid option");
+                    }
+                } else if(input.equals("h")) {
+                    nextPage = new InitialPage();
+                } else if(input.equals("r")) {
+                    nextPage = this;
+                } else {
+                    System.out.println("\nInvalid Option");
+                }
+            }
+
+            cli.build(nextPage);
+        }
+
+    }
+
     private static class DebugModePage implements Page {
+
+        private final Master master;
+
+        public DebugModePage(final Master master) {
+            this.master = master;
+        }
 
         @Override
         public void show(final Cli cli) {
@@ -344,11 +436,16 @@ public class Simulation {
 
                 switch (input) {
                     case "1":
+                        master.connectedSlaves.forEach(slave -> System.out.println(slave.getPerformanceIndex()));
                         break;
                     case "2":
+                        master.connectedSlaves.forEach(slave -> System.out.println(slave.getAvailability()));
                         break;
                     case "h":
                         nextPage = new InitialPage();
+                        break;
+                    case "r":
+                        nextPage = this;
                         break;
                     default:
                         System.out.println("\nInvalid option");
@@ -358,18 +455,6 @@ public class Simulation {
             cli.build(nextPage);
         }
 
-    }
-
-    @FunctionalInterface
-    private interface Widget {
-
-        String build(Map.Entry<Character, Widget>... actions);
-
-    }
-
-    @FunctionalInterface
-    private interface asd {
-        void apply(String a, String b);
     }
 
 }

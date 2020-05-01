@@ -2,13 +2,12 @@ package datastructures.scheduler;
 
 import java.util.List;
 
-import datastructures.CodeExecutionRequest;
-
+import datastructures.Request;
+import datastructures.SlaveToSchedule;
 import datastructures.handler.SlaveHandler;
-import slave.Slave;
 
 public interface SlaveScheduler {
 
-    void schedule(final List<Slave> slaves, final CodeExecutionRequest request, final SlaveHandler slaveHandler);
+    void schedule(final List<SlaveToSchedule> slaves, final Request request, final SlaveHandler slaveHandler);
 
 }

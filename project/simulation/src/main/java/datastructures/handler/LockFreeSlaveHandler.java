@@ -43,6 +43,8 @@ public class LockFreeSlaveHandler extends SlaveHandler {
                 final List<Request> parcelsOfRequest = this.priorityRequestQueue.parallelStream().filter(request1 -> request1.getRequestID() == headRequest.getRequestID()).collect(Collectors.toCollection(ArrayList::new));
                 final List<Request> requestsToFold = new ArrayList<>();
 
+                // concurrent queue pops might occur so the requests to fold might be outdated
+                // to solve this we only fold the requests that were removed on this stage
                 for(Request requestToRemoveFromPriorityQueue : parcelsOfRequest) {
                     if(this.priorityRequestQueue.remove(requestToRemoveFromPriorityQueue)) {
                         requestsToFold.add(requestToRemoveFromPriorityQueue);
@@ -52,23 +54,12 @@ public class LockFreeSlaveHandler extends SlaveHandler {
             }
         }
 
-        List<Slave> availableSlaves = slaves
+        List<SlaveToSchedule> slavesToSchedule = slaves
                 .parallelStream()
-                .filter(slave -> tryReserveSlaveAvailability(slave, request))
+                .map(slave -> new SlaveToSchedule(slave, tryReserveSlaveAvailability(slave, requestForSlavesToProcess)))
                 .collect(Collectors.toList());
 
-        if(availableSlaves.size() > 0) {
-
-            if(request instanceof CodeExecutionRequest) {
-                computationResults.put(request.getRequestID(), new FixedSizeLockFreeList<>(availableSlaves.size()));
-                super.scheduler.schedule(availableSlaves, (CodeExecutionRequest) request, this);
-            } else {
-                slaves.forEach(slave -> slave.process(request, this));
-            }
-
-        } else {
-            super.master.receiveRequestCouldNotBeScheduled(request);
-        }
+        this.scheduler.schedule(slavesToSchedule, requestForSlavesToProcess, this);
     }
 
     @Override

@@ -4,13 +4,11 @@ import datastructures.CodeExecutionRequest;
 import datastructures.ReportPerformanceIndexRequest;
 import datastructures.Request;
 import datastructures.handler.SlaveHandler;
-//import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.Comparator;
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Slave implements Comparable<Slave> {
 
@@ -18,6 +16,7 @@ public class Slave implements Comparable<Slave> {
     private int performanceIndex;
     private AtomicInteger availability;
     private final Executor exec;
+    private final Random randomFailureMachine;
 
     //implement setters and getters
     public int getPerformanceIndex() {
@@ -33,9 +32,15 @@ public class Slave implements Comparable<Slave> {
         this.performanceIndex = performanceIndex;
         this.availability = new AtomicInteger(100);
         this.exec = Executors.newFixedThreadPool(performanceIndex);
+        this.randomFailureMachine = new Random();
     }
 
     public void process(Request request, SlaveHandler slaveHandler){
+
+        if(tryToRandomlyFail()) {
+            slaveHandler.reportCouldNotProcessRequest(request);
+        }
+
         final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
 
         Runnable taskToBeExecuted;
@@ -55,6 +60,12 @@ public class Slave implements Comparable<Slave> {
         } else {
             return 0;
         }
+    }
+
+    // This method needs to be spied on tests, otherwise it will fail tests randomly
+
+    private boolean tryToRandomlyFail() {
+        return this.randomFailureMachine.nextInt(10) > 8;
     }
 
     @Override

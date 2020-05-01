@@ -8,14 +8,18 @@ import datastructures.scheduler.SlaveScheduler;
 import master.Master;
 import slave.Slave;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final FixedSizeLockFreeList<Slave> slaves;
 
-    private final LockFreeList<Request> priorityRequestQueue;
+    private final LockFreeList<Map.Entry<Integer,LockFreeList<Request>>> priorityRequestQueue;
+
+    private final LockFreeList<Request> newRequestsQueue;
 
     private final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
@@ -23,11 +27,23 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         super(scheduler, master);
         this.slaves = new FixedSizeLockFreeList<>(slaves.size());
         this.priorityRequestQueue = new LockFreeList<>();
+        this.newRequestsQueue = new LockFreeList<>();
         this.slaves.addAll(slaves);
     }
 
     @Override
     public void requestSlaves(final Request request) {
+
+        Request requestForSlavesToProcess;
+
+        this.newRequestsQueue.add(request);
+
+        if(this.priorityRequestQueue.isEmpty()) {
+            requestForSlavesToProcess = this.newRequestsQueue.poll();
+        } else {
+            requestForSlavesToProcess = foldRequests(this.priorityRequestQueue.poll().getValue());
+        }
+
         List<Slave> availableSlaves = slaves
                 .parallelStream()
                 .filter(slave -> tryReserveSlaveAvailability(slave, request))
@@ -95,6 +111,26 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     @Override
     public void reportCouldNotProcessRequest(Request request) {
+
+    }
+
+    private Request foldRequests(final LockFreeList<Request> requests) {
+
+        final Request headRequest = requests.peek();
+
+        if(headRequest instanceof CodeExecutionRequest) {
+            return requests
+                    .parallelStream()
+                    .map(CodeExecutionRequest.class::cast)
+                    .reduce(new CodeExecutionRequest(
+                                new ArrayList<>(), headRequest.getRequestID(), ((CodeExecutionRequest) headRequest).getOp()),
+                            (request, request2) -> {
+                        request.getNumbers().addAll(request2.getNumbers());
+                        return request;
+                    });
+        } else {
+            return headRequest;
+        }
 
     }
 

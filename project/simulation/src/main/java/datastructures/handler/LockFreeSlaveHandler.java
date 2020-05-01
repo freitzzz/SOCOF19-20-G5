@@ -1,6 +1,7 @@
 package datastructures.handler;
 
 import datastructures.*;
+import datastructures.list.FixedSizeLockFreeList;
 import datastructures.list.LockFreeList;
 import datastructures.map.LockFreeMap;
 import datastructures.scheduler.SlaveScheduler;
@@ -12,13 +13,16 @@ import java.util.stream.Collectors;
 
 public class LockFreeSlaveHandler extends SlaveHandler {
 
-    private final LockFreeList<Slave> slaves;
+    private final FixedSizeLockFreeList<Slave> slaves;
 
-    private final LockFreeMap<Integer, LockFreeList<Result>> computationResults = new LockFreeMap<>();
+    private final LockFreeList<Request> priorityRequestQueue;
+
+    private final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
     public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
         super(scheduler, master);
-        this.slaves = new LockFreeList<>(slaves.size());
+        this.slaves = new FixedSizeLockFreeList<>(slaves.size());
+        this.priorityRequestQueue = new LockFreeList<>();
         this.slaves.addAll(slaves);
     }
 
@@ -32,7 +36,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         if(availableSlaves.size() > 0) {
 
             if(request instanceof CodeExecutionRequest) {
-                computationResults.put(request.getRequestID(), new LockFreeList<>(availableSlaves.size()));
+                computationResults.put(request.getRequestID(), new FixedSizeLockFreeList<>(availableSlaves.size()));
                 super.scheduler.schedule(availableSlaves, (CodeExecutionRequest) request, this);
             } else {
                 slaves.forEach(slave -> slave.process(request, this));
@@ -45,7 +49,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     @Override
     public void pushResult(final Result result) {
-        final LockFreeList<Result> results = computationResults.get(result.getRequestID());
+        final FixedSizeLockFreeList<Result> results = computationResults.get(result.getRequestID());
         results.add(result);
         if (results.hasReachedMaxSize()) {
             final int finalResultSum;
@@ -86,6 +90,11 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         } else {
             reportAvailability(slave, request);
         }
+
+    }
+
+    @Override
+    public void reportCouldNotProcessRequest(Request request) {
 
     }
 

@@ -10,16 +10,13 @@ import slave.Slave;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final FixedSizeLockFreeList<Slave> slaves;
 
-    private final LockFreeList<Map.Entry<Integer,LockFreeList<Request>>> priorityRequestQueue;
-
-    private final LockFreeList<Request> newRequestsQueue;
+    private final LockFreeList<Request> priorityRequestQueue;
 
     private final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
@@ -27,7 +24,6 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         super(scheduler, master);
         this.slaves = new FixedSizeLockFreeList<>(slaves.size());
         this.priorityRequestQueue = new LockFreeList<>();
-        this.newRequestsQueue = new LockFreeList<>();
         this.slaves.addAll(slaves);
     }
 
@@ -36,12 +32,24 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
         Request requestForSlavesToProcess;
 
-        this.newRequestsQueue.add(request);
-
         if(this.priorityRequestQueue.isEmpty()) {
-            requestForSlavesToProcess = this.newRequestsQueue.poll();
+            requestForSlavesToProcess = request;
         } else {
-            requestForSlavesToProcess = foldRequests(this.priorityRequestQueue.poll().getValue());
+            final Request headRequest = this.priorityRequestQueue.poll();
+
+            if(headRequest == null) {
+                requestForSlavesToProcess = request;
+            } else {
+                final List<Request> parcelsOfRequest = this.priorityRequestQueue.parallelStream().filter(request1 -> request1.getRequestID() == headRequest.getRequestID()).collect(Collectors.toCollection(ArrayList::new));
+                final List<Request> requestsToFold = new ArrayList<>();
+
+                for(Request requestToRemoveFromPriorityQueue : parcelsOfRequest) {
+                    if(this.priorityRequestQueue.remove(requestToRemoveFromPriorityQueue)) {
+                        requestsToFold.add(requestToRemoveFromPriorityQueue);
+                    }
+                }
+                requestForSlavesToProcess = foldRequests(headRequest, requestsToFold);
+            }
         }
 
         List<Slave> availableSlaves = slaves
@@ -111,25 +119,23 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     @Override
     public void reportCouldNotProcessRequest(Request request) {
-
+        this.priorityRequestQueue.add(request);
     }
 
-    private Request foldRequests(final LockFreeList<Request> requests) {
+    private Request foldRequests(final Request startRequest, final List<Request> requests) {
 
-        final Request headRequest = requests.peek();
-
-        if(headRequest instanceof CodeExecutionRequest) {
+        if(startRequest instanceof CodeExecutionRequest) {
             return requests
                     .parallelStream()
                     .map(CodeExecutionRequest.class::cast)
                     .reduce(new CodeExecutionRequest(
-                                new ArrayList<>(), headRequest.getRequestID(), ((CodeExecutionRequest) headRequest).getOp()),
+                                new ArrayList<>(), startRequest.getRequestID(), ((CodeExecutionRequest) startRequest).getOp()),
                             (request, request2) -> {
                         request.getNumbers().addAll(request2.getNumbers());
                         return request;
                     });
         } else {
-            return headRequest;
+            return startRequest;
         }
 
     }

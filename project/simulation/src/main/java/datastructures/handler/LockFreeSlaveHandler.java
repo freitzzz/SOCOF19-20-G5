@@ -7,7 +7,6 @@ import datastructures.scheduler.SlaveScheduler;
 import master.Master;
 import slave.Slave;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -17,7 +16,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final FixedSizeLockFreeList<Slave> slaves;
 
-    private final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
+    protected final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
     private final ScheduledExecutorService rescheduleExecutor;
 
@@ -107,26 +106,8 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         }
     }
 
-    private void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
+    protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
         this.rescheduleExecutor.schedule(() -> slave.process(request, this), 5, TimeUnit.SECONDS);
-    }
-
-    private Request foldRequests(final Request startRequest, final List<Request> requests) {
-
-        if(startRequest instanceof CodeExecutionRequest) {
-            return requests
-                    .parallelStream()
-                    .map(CodeExecutionRequest.class::cast)
-                    .reduce(new CodeExecutionRequest(
-                                new ArrayList<>(), startRequest.getRequestID(), ((CodeExecutionRequest) startRequest).getOp()),
-                            (request, request2) -> {
-                        request.getNumbers().addAll(request2.getNumbers());
-                        return request;
-                    });
-        } else {
-            return startRequest;
-        }
-
     }
 
     private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {

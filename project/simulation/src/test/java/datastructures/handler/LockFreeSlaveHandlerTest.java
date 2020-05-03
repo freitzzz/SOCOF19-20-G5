@@ -1,18 +1,20 @@
 package datastructures.handler;
 
 import datastructures.*;
-import datastructures.scheduler.PerformanceIndexSlaveScheduler;
 import datastructures.scheduler.SlaveScheduler;
 import master.Master;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.internal.verification.api.VerificationData;
+import org.mockito.verification.VerificationMode;
 import slave.Slave;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class LockFreeSlaveHandlerTest {
@@ -194,6 +196,85 @@ public class LockFreeSlaveHandlerTest {
         verify(result, times(slaves.size())).getValue();
 
         verify(master, times(1)).receiveResult(any(Result.class));
+    }
+
+    @Test
+    public void ensureOnNotifyScheduledRequestIfTheRequestIsCodeExecutionRequestThenTheAmountOfSchedulesIsAllocatedInComputationResultsMap() {
+
+        LockFreeSlaveHandler slaveHandler = new LockFreeSlaveHandler(scheduler, master, slaves);
+
+        assertNull(slaveHandler.computationResults.get(codeExecutionRequest.getRequestID()));
+
+        slaveHandler.notifyScheduledRequests(codeExecutionRequest, 5);
+
+        assertNotNull(slaveHandler.computationResults.get(codeExecutionRequest.getRequestID()));
+
+
+    }
+
+    @Test
+    public void ensureOnReportCouldNotProcessRequestIfTheRequestIsReportPerformanceIndexRequestThenTheRequestIsRescheduledInTheFuture() {
+
+        LockFreeSlaveHandler slaveHandler = spy(new LockFreeSlaveHandler(scheduler, master, slaves));
+
+        final Slave slave = slaves.get(0);
+
+        final Request request = reportPerformanceIndexRequest;
+
+        slaveHandler.reportCouldNotProcessRequest(slave, request);
+
+        verify(slaveHandler, times(1)).rescheduleRequestToSlaveInTheFuture(slave, request);
+
+    }
+
+    @Test
+    public void ensureOnReportCouldNotProcessRequestIfTheRequestIsCodeExecutionRequestAndThereIsAtLeastTwoSlavesForScheduleThenTheRequestIsScheduleToOneOfThese() {
+
+        LockFreeSlaveHandler slaveHandler = spy(new LockFreeSlaveHandler(scheduler, master, slaves));
+
+        final Slave slave = slaves.get(0);
+
+        final Request request = codeExecutionRequest;
+
+        slaveHandler.reportCouldNotProcessRequest(slave, request);
+
+        verify(slave, never()).process(request, slaveHandler);
+
+        final int[] numberOfTimesProcessCalled = {0};
+
+        slaves.parallelStream()
+                .filter(slave1 -> slave1 != slave)
+                .forEach(slave1 -> verify(slave1, new VerificationMode() {
+                    @Override
+                    public void verify(VerificationData data) {
+                        if(data.getAllInvocations().size() > 0) {
+                            numberOfTimesProcessCalled[0]++;
+                        }
+                    }
+
+                    @Override
+                    public VerificationMode description(String description) {
+                        return null;
+                    }
+                }).process(request, slaveHandler));
+
+        assertEquals(numberOfTimesProcessCalled[0], 1);
+    }
+
+    @Test
+    public void ensureOnReportCouldNotProcessRequestIfTheRequestIsCodeExecutionRequestAndThereIsOnlyOneSlaveForScheduleThenTheRequestIsRescheduledInTheFutureForTheSlave() {
+
+        final List<Slave> availableSlaves = slaves.subList(0, 1);
+
+        LockFreeSlaveHandler slaveHandler = spy(new LockFreeSlaveHandler(scheduler, master, availableSlaves));
+
+        final Slave slave = availableSlaves.get(0);
+
+        final Request request = codeExecutionRequest;
+
+        slaveHandler.reportCouldNotProcessRequest(slave, request);
+
+        verify(slaveHandler, times(1)).rescheduleRequestToSlaveInTheFuture(slave, request);
     }
 
     @Test

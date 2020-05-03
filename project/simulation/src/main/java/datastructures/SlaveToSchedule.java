@@ -2,6 +2,8 @@ package datastructures;
 
 import slave.Slave;
 
+import java.util.Objects;
+
 public class SlaveToSchedule {
 
     public final Slave slave;
@@ -13,4 +15,13 @@ public class SlaveToSchedule {
         this.isAvailable = isAvailable;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return o != null && this.hashCode() == o.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(slave, isAvailable);
+    }
 }

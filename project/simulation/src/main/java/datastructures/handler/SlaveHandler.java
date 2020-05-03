@@ -25,6 +25,7 @@ public abstract class SlaveHandler {
     public abstract void reportPerformance(Slave slave);
     public abstract void reportAvailability(Slave slave, Request request);
     public abstract void reportCouldNotProcessRequest(Slave slave, Request request);
+    public abstract void notifyScheduledRequests(Request request, int numberOfSchedules);
 
     public enum Type {
         LOCK_BASED,

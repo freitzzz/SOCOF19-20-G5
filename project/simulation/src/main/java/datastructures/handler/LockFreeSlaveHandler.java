@@ -2,7 +2,6 @@ package datastructures.handler;
 
 import datastructures.*;
 import datastructures.list.FixedSizeLockFreeList;
-import datastructures.list.LockFreeList;
 import datastructures.map.LockFreeMap;
 import datastructures.scheduler.SlaveScheduler;
 import master.Master;
@@ -18,8 +17,6 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final FixedSizeLockFreeList<Slave> slaves;
 
-    private final LockFreeList<Request> priorityRequestQueue;
-
     private final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
     private final ScheduledExecutorService rescheduleExecutor;
@@ -27,7 +24,6 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
         super(scheduler, master);
         this.slaves = new FixedSizeLockFreeList<>(slaves.size());
-        this.priorityRequestQueue = new LockFreeList<>();
         this.slaves.addAll(slaves);
         this.rescheduleExecutor = Executors.newScheduledThreadPool(slaves.size());
     }
@@ -35,36 +31,12 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     @Override
     public void requestSlaves(final Request request) {
 
-        Request requestForSlavesToProcess;
-
-        if(this.priorityRequestQueue.isEmpty()) {
-            requestForSlavesToProcess = request;
-        } else {
-            final Request headRequest = this.priorityRequestQueue.poll();
-
-            if(headRequest == null) {
-                requestForSlavesToProcess = request;
-            } else {
-                final List<Request> parcelsOfRequest = this.priorityRequestQueue.parallelStream().filter(request1 -> request1.getRequestID() == headRequest.getRequestID()).collect(Collectors.toCollection(ArrayList::new));
-                final List<Request> requestsToFold = new ArrayList<>();
-
-                // concurrent queue pops might occur so the requests to fold might be outdated
-                // to solve this we only fold the requests that were removed on this stage
-                for(Request requestToRemoveFromPriorityQueue : parcelsOfRequest) {
-                    if(this.priorityRequestQueue.remove(requestToRemoveFromPriorityQueue)) {
-                        requestsToFold.add(requestToRemoveFromPriorityQueue);
-                    }
-                }
-                requestForSlavesToProcess = foldRequests(headRequest, requestsToFold);
-            }
-        }
-
         List<SlaveToSchedule> slavesToSchedule = slaves
                 .parallelStream()
-                .map(slave -> new SlaveToSchedule(slave, tryReserveSlaveAvailability(slave, requestForSlavesToProcess)))
+                .map(slave -> new SlaveToSchedule(slave, tryReserveSlaveAvailability(slave, request)))
                 .collect(Collectors.toList());
 
-        this.scheduler.schedule(slavesToSchedule, requestForSlavesToProcess, this);
+        this.scheduler.schedule(slavesToSchedule, request, this);
     }
 
     @Override
@@ -125,6 +97,13 @@ public class LockFreeSlaveHandler extends SlaveHandler {
             } else {
                 this.rescheduleRequestToSlaveInTheFuture(slave, request);
             }
+        }
+    }
+
+    @Override
+    public void notifyScheduledRequests(Request request, int numberOfSchedules) {
+        if(request instanceof CodeExecutionRequest) {
+            this.computationResults.put(request.getRequestID(), new FixedSizeLockFreeList<>(numberOfSchedules));
         }
     }
 

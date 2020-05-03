@@ -1,7 +1,11 @@
 package slave;
 
 import datastructures.CodeExecutionRequest;
+import datastructures.ReportPerformanceIndexRequest;
+import datastructures.Request;
+import datastructures.handler.SlaveHandler;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +18,7 @@ public class SlaveTest {
     private TestSlaveHandler slaveHandler = new TestSlaveHandler(null);
 
     @Test
-    public void ensureOnePlusOneIsTwo() throws InterruptedException {
+    public void ensureOnePlusOneIsTwo() {
         Slave s = new Slave(1);
 
         List<Integer> l = new ArrayList<>();
@@ -27,7 +31,7 @@ public class SlaveTest {
     }
 
     @Test
-    public void ensureTwoTimesTwoIsFour() throws InterruptedException {
+    public void ensureTwoTimesTwoIsFour() {
         Slave s = new Slave(1);
 
         List<Integer> l = new ArrayList<>();
@@ -40,7 +44,7 @@ public class SlaveTest {
     }
 
     @Test
-    public void ensureTwoTimesZeroIsZero() throws InterruptedException {
+    public void ensureTwoTimesZeroIsZero() {
         Slave s = new Slave(1);
 
         List<Integer> l = new ArrayList<>();
@@ -69,6 +73,56 @@ public class SlaveTest {
         assertEquals(slaveHandler.getResult(4).value,0);
         assertEquals(slaveHandler.getResult(5).value,0);
         assertEquals(slaveHandler.getResult(6).value,2);
+    }
+
+    @Test
+    public void ensureCodeExecutionRequestCosts25AvailabilityPerCompute() {
+
+
+        final Slave slave = new Slave(1);
+
+        final Request request = new CodeExecutionRequest(new ArrayList<>(), 1, CodeExecutionRequest.Operation.ADD);
+
+        final int expectedReduceOfAvailabilityPerCodeExecutionRequest = 25;
+
+        final int actualReduceOfAvailabilityPerCodeExecutionRequest = slave.getAvailabilityReducePerCompute(request);
+
+        assertEquals(expectedReduceOfAvailabilityPerCodeExecutionRequest, actualReduceOfAvailabilityPerCodeExecutionRequest);
+
+    }
+
+    @Test
+    public void ensureReportPerformanceRequestCosts0AvailabilityPerCompute() {
+
+
+        final Slave slave = new Slave(1);
+
+        final Request request = new ReportPerformanceIndexRequest(1);
+
+        final int expectedReduceOfAvailabilityPerCodeExecutionRequest = 0;
+
+        final int actualReduceOfAvailabilityPerCodeExecutionRequest = slave.getAvailabilityReducePerCompute(request);
+
+        assertEquals(expectedReduceOfAvailabilityPerCodeExecutionRequest, actualReduceOfAvailabilityPerCodeExecutionRequest);
+
+    }
+
+    @Test
+    public void ensureIfSlaveRandomlyFailsSlaveHandlerIsNotifiedThatHeWasNotAbleToProcessTheRequest() {
+
+
+        final Slave slave = Mockito.spy(new Slave(1));
+
+        final Request request = new ReportPerformanceIndexRequest(1);
+
+        final SlaveHandler slaveHandler = Mockito.mock(SlaveHandler.class);
+
+        Mockito.doReturn(true).when(slave).tryToRandomlyFail();
+
+        slave.process(request, slaveHandler);
+
+        Mockito.verify(slaveHandler, Mockito.times(1)).reportCouldNotProcessRequest(slave, request);
+
     }
 
 }

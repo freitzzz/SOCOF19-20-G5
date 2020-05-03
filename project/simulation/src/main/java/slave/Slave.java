@@ -38,7 +38,7 @@ public class Slave implements Comparable<Slave> {
     public void process(Request request, SlaveHandler slaveHandler){
 
         if(tryToRandomlyFail()) {
-            slaveHandler.reportCouldNotProcessRequest(request);
+            slaveHandler.reportCouldNotProcessRequest(this, request);
         }
 
         final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
@@ -64,7 +64,7 @@ public class Slave implements Comparable<Slave> {
 
     // This method needs to be spied on tests, otherwise it will fail tests randomly
 
-    private boolean tryToRandomlyFail() {
+    protected boolean tryToRandomlyFail() {
         return this.randomFailureMachine.nextInt(10) > 8;
     }
 

@@ -37,6 +37,16 @@ public class TestSlaveHandler extends SlaveHandler {
 
     }
 
+    @Override
+    public void reportCouldNotProcessRequest(Slave slave, Request request) {
+
+    }
+
+    @Override
+    public void notifyScheduledRequests(Request request, int numberOfSchedules) {
+
+    }
+
 
     public Result getResult(int id){
         while(true){

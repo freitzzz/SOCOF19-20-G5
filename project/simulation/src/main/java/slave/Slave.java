@@ -39,18 +39,18 @@ public class Slave implements Comparable<Slave> {
 
         if(tryToRandomlyFail()) {
             slaveHandler.reportCouldNotProcessRequest(this, request);
-        }
-
-        final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
-
-        Runnable taskToBeExecuted;
-
-        if(isCodeExecutionRequest) {
-            taskToBeExecuted = new ComputeThread((CodeExecutionRequest)request, slaveHandler, this);
         } else {
-            taskToBeExecuted = new ReportPerformanceIndexThread((ReportPerformanceIndexRequest) request, slaveHandler, this);
+            final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
+
+            Runnable taskToBeExecuted;
+
+            if (isCodeExecutionRequest) {
+                taskToBeExecuted = new ComputeThread((CodeExecutionRequest) request, slaveHandler, this);
+            } else {
+                taskToBeExecuted = new ReportPerformanceIndexThread((ReportPerformanceIndexRequest) request, slaveHandler, this);
+            }
+            exec.execute(taskToBeExecuted);
         }
-        exec.execute(taskToBeExecuted);
     }
 
     public int getAvailabilityReducePerCompute(Request request) {

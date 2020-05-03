@@ -10,6 +10,8 @@ import slave.Slave;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class LockFreeSlaveHandler extends SlaveHandler {
@@ -20,11 +22,14 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
+    private final ScheduledExecutorService rescheduleExecutor;
+
     public LockFreeSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
         super(scheduler, master);
         this.slaves = new FixedSizeLockFreeList<>(slaves.size());
         this.priorityRequestQueue = new LockFreeList<>();
         this.slaves.addAll(slaves);
+        this.rescheduleExecutor = Executors.newScheduledThreadPool(slaves.size());
     }
 
     @Override
@@ -109,8 +114,22 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     @Override
-    public void reportCouldNotProcessRequest(Request request) {
-        this.priorityRequestQueue.add(request);
+    public void reportCouldNotProcessRequest(Slave slave, Request request) {
+        if(request instanceof ReportPerformanceIndexRequest) {
+            this.rescheduleRequestToSlaveInTheFuture(slave, request);
+        } else {
+            final Optional<Slave> optionalSlave =  this.slaves.parallelStream().filter(slave1 -> slave1 != slave).findAny();
+
+            if(optionalSlave.isPresent()) {
+                optionalSlave.get().process(request, this);
+            } else {
+                this.rescheduleRequestToSlaveInTheFuture(slave, request);
+            }
+        }
+    }
+
+    private void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
+        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 5, TimeUnit.SECONDS);
     }
 
     private Request foldRequests(final Request startRequest, final List<Request> requests) {

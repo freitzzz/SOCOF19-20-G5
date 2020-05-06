@@ -310,12 +310,12 @@ public class LockBasedSlaveHandlerTest {
             return null;
         }).when(master).receiveResult(any(Result.class));
 
-        for(int i = 0; i < 10000; i++) {
+        for(int i = 0; i < 1000; i++) {
             slaveHandler.requestSlaves(new CodeExecutionRequest(values, i, CodeExecutionRequest.Operation.ADD));
         }
 
         ((Runnable) () -> {
-            while (timesInvoked.intValue() < 10000) {
+            while (timesInvoked.intValue() < 1000) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {

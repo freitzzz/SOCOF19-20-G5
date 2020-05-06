@@ -4,7 +4,7 @@ import slave.Slave;
 
 import java.util.Objects;
 
-public class SlaveToSchedule {
+public class SlaveToSchedule implements Comparable<SlaveToSchedule>{
 
     public final Slave slave;
 
@@ -23,5 +23,10 @@ public class SlaveToSchedule {
     @Override
     public int hashCode() {
         return Objects.hash(slave, isAvailable);
+    }
+
+    @Override
+    public int compareTo(SlaveToSchedule slave) {
+        return Integer.compare(this.slave.getPerformanceIndex(), slave.slave.getPerformanceIndex());
     }
 }

@@ -11,6 +11,7 @@ import master.Master;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -67,7 +68,9 @@ public class LockBasedSlaveHandlerTest {
             verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
         });
 
-        verify(scheduler, only()).schedule(slaves, codeExecutionRequest, slaveHandler);
+        List<SlaveToSchedule> fSlaves = slaves.parallelStream().map(s -> new SlaveToSchedule(s,true)).collect(Collectors.toList());
+
+        verify(scheduler, only()).schedule(fSlaves, codeExecutionRequest, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
     }
@@ -110,7 +113,9 @@ public class LockBasedSlaveHandlerTest {
         verify(slaves.get(2), times(1)).getAvailability();
         verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
 
-        verify(scheduler, only()).schedule(expectedSlavesScheduledForCompute, codeExecutionRequest, slaveHandler);
+        List<SlaveToSchedule> fSlaves = expectedSlavesScheduledForCompute.parallelStream().map(s -> new SlaveToSchedule(s,true)).collect(Collectors.toList());
+
+        verify(scheduler, only()).schedule(fSlaves, codeExecutionRequest, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
     }

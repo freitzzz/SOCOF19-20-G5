@@ -23,6 +23,8 @@ As observed in the diagram, besides the concepts that were knew previously, ther
 
 ### Load balancing algorithm
 
+Before applying the load balancing algorithm the scheduler first detects if the request is for reporting the performance index or computing numbers. If it's for reporting performance the scheduler send the request for each slave that is available. Otherwise, if it's a request for computing numbers, the algorithm is applied and before sending the request it verifies if the slave is available and sends it if it is. In case it's not, the scheduler informs the slave handler that a slave could not process a request which is then rescheduled to another slave.
+
 The formula used for deciding how many numbers each slave receives is as follows:
 
 ![](diagrams/res/PerformanceIndexFormula.png)

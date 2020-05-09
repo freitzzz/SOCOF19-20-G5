@@ -10,7 +10,8 @@ import slave.Slave;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
 
@@ -22,6 +23,8 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
 
         Collections.sort(slaves);
 
+        final List<Runnable> asd = new ArrayList<>();
+
         for (SlaveToSchedule slave : slaves) {
             overallPerformance+=slave.slave.getPerformanceIndex();
         }
@@ -31,7 +34,9 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
             if(i == slaves.size()-1){
                 List<Integer> numbersSlice = request.getNumbers().subList(startIndex, numbersSize);
 
-                tryToProcess(slaves.get(i),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler);
+                final int finalI = i;
+                asd.add(() -> tryToProcess(slaves.get(finalI),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler));
+
                 //slaves.get(i).process(new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
                 i++;
                 break;
@@ -54,7 +59,9 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
 
             List<Integer> numbersSlice = request.getNumbers().subList(startIndex, endIndex);
 
-            tryToProcess(slaves.get(i),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler);
+            int finalI1 = i;
+            asd.add(() -> tryToProcess(slaves.get(finalI1),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler));
+
             //slaves.get(i).process(new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
 
             if(endIndex == numbersSize){
@@ -64,13 +71,21 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
                 startIndex = endIndex;
             }
         }
-        for(; i< slaves.size();i++){
+
+        slaveHandler.notifyScheduledRequests(request, asd.size());
+
+        asd.forEach(Runnable::run);
+
+        /*for(; i< slaves.size();i++){
             unrequestedSlaves.add(slaves.get(i));
-        }
-        for(SlaveToSchedule s : unrequestedSlaves){
+        }*/
+        /*for(SlaveToSchedule s : unrequestedSlaves){
+
+
+
             tryToProcess(s,new CodeExecutionRequest(Collections.emptyList(),request.getRequestID(),request.getOp()),slaveHandler);
             //s.process(new CodeExecutionRequest(Collections.emptyList(),request.getRequestID(),request.getOp()),slaveHandler);
-        }
+        }*/
     }
 
     private void scheduleReport(List<SlaveToSchedule> slaves, ReportPerformanceIndexRequest request, SlaveHandler slaveHandler){

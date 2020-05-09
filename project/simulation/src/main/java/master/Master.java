@@ -8,8 +8,6 @@ import datastructures.scheduler.PerformanceIndexSlaveScheduler;
 import datastructures.scheduler.SlaveScheduler;
 import slave.Slave;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +23,7 @@ public class Master {
 
     public final List<Slave> connectedSlaves;
 
-    private Master(final List<Slave> slavesToConnect, final SlaveScheduler scheduler, final SlaveHandler.Type slaveHandlerType, final int numberOfWorkers) {
+    public Master(final List<Slave> slavesToConnect, final SlaveScheduler scheduler, final SlaveHandler.Type slaveHandlerType, final int numberOfWorkers) {
 
         List<Slave> connectedSlaves = new ArrayList<>(slavesToConnect);
 
@@ -105,6 +103,16 @@ public class Master {
             slaveHandler.requestSlaves(new ReportPerformanceIndexRequest(requestPerformed++));
         });
 
+    }
+
+    @Override
+    public String toString() {
+        return "Master{" +
+                "executor=" + executor +
+                ", slaveHandler=" + slaveHandler +
+                ", requestPerformed=" + requestPerformed +
+                ", connectedSlaves=" + connectedSlaves +
+                '}';
     }
 
     public static class MasterBuilder {

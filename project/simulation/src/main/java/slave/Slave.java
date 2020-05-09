@@ -39,6 +39,7 @@ public class Slave implements Comparable<Slave> {
 
         if(tryToRandomlyFail()) {
             slaveHandler.reportCouldNotProcessRequest(this, request);
+            slaveHandler.reportAvailability(this, request);
         } else {
             final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
 

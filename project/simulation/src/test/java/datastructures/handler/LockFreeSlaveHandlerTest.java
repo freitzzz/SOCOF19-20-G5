@@ -232,6 +232,8 @@ public class LockFreeSlaveHandlerTest {
 
         LockFreeSlaveHandler slaveHandler = spy(new LockFreeSlaveHandler(scheduler, master, slaves));
 
+        slaves.forEach(slave -> when(slave.getAvailability()).thenReturn(new AtomicInteger(100)));
+
         final Slave slave = slaves.get(0);
 
         final Request request = codeExecutionRequest;

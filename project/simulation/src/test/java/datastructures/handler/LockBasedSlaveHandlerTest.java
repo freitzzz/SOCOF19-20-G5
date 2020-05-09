@@ -118,7 +118,6 @@ public class LockBasedSlaveHandlerTest {
                     verify(slaveToSchedule.slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
                 });
 
-        verify(slaves.get(2), times(2)).getAvailability();
         verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
 
         verify(scheduler, times(1)).schedule(expectedSlavesScheduledForCompute, codeExecutionRequest, slaveHandler);
@@ -138,7 +137,7 @@ public class LockBasedSlaveHandlerTest {
         slaveHandler.requestSlaves(codeExecutionRequest);
 
         slaves.forEach(slave -> {
-            verify(slave, times(2)).getAvailability();
+            verify(slave, times(1)).getAvailability();
             verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
         });
 
@@ -226,6 +225,8 @@ public class LockBasedSlaveHandlerTest {
     public void ensureOnReportCouldNotProcessRequestIfTheRequestIsCodeExecutionRequestAndThereIsAtLeastTwoSlavesForScheduleThenTheRequestIsScheduleToOneOfThese() {
 
         LockBasedSlaveHandler slaveHandler = spy(new LockBasedSlaveHandler(scheduler, master, slaves));
+
+        slaves.forEach(slave -> when(slave.getAvailability()).thenReturn(new AtomicInteger(100)));
 
         final Slave slave = slaves.get(0);
 

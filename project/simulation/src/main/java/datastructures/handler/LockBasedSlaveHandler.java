@@ -41,18 +41,12 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         try{
             System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
             for(Slave slave : slaves){
-                currentSlaveAvailability  = slave.getAvailability().get();
-                slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
-                if(slaveAvailabilityAfterCompute >= 0) {
-                    slave.getAvailability().set(slaveAvailabilityAfterCompute);
-                    SlaveToSchedule slave1 = new SlaveToSchedule(slave, true);
-                    slavesToSchedule.add(slave1);
-                }
-                else {
-                    slave.getAvailability().set(slaveAvailabilityAfterCompute);
-                    SlaveToSchedule slave1 = new SlaveToSchedule(slave, false);
-                    slavesToSchedule.add(slave1);
-                }
+
+                final boolean reserved = tryReserveSlaveAvailability(slave, request);
+
+                SlaveToSchedule slave1 = new SlaveToSchedule(slave, reserved);
+
+                slavesToSchedule.add(slave1);
             }
 
             this.scheduler.schedule(slavesToSchedule, request, this);
@@ -102,18 +96,16 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     public void reportAvailability(Slave slave, Request request) {
         int slaveAvailabilityAfterCompute = 0;
         int currentSlaveAvailability = 0;
-        System.out.println("In reportAvailability, thread " + Thread.currentThread().getId()+ " waiting to get lock");
+        //System.out.println("In reportAvailability, thread " + Thread.currentThread().getId()+ " waiting to get lock");
         lock.lock();
         try {
-            System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
+            //System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
             currentSlaveAvailability  = slave.getAvailability().get();
             slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
             if(slaveAvailabilityAfterCompute <= 100) {
                 final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
                 slave.getAvailability().set(slaveAvailabilityAfterCompute);
                 super.master.receiveSlaveAvailability(details);
-            } else {
-                reportAvailability(slave, request);
             }
 
         } finally {
@@ -126,12 +118,28 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         if(request instanceof ReportPerformanceIndexRequest) {
             this.rescheduleRequestToSlaveInTheFuture(slave, request);
         } else {
-            final Optional<Slave> optionalSlave =  this.slaves.parallelStream().filter(slave1 -> slave1 != slave).findAny();
+            lock.lock();
 
-            if(optionalSlave.isPresent()) {
-                optionalSlave.get().process(request, this);
-            } else {
-                this.rescheduleRequestToSlaveInTheFuture(slave, request);
+            try {
+
+                final Optional<Slave> optionalSlave = this.slaves.parallelStream().filter(slave1 -> slave1 != slave).findAny();
+
+                if (optionalSlave.isPresent()) {
+                    final Slave chosenSlave = optionalSlave.get();
+
+                    if (tryReserveSlaveAvailability(chosenSlave, request)) {
+
+                        chosenSlave.process(request, this);
+
+                    } else {
+                        this.rescheduleRequestToSlaveInTheFuture(slave, request);
+                    }
+                } else {
+                    this.rescheduleRequestToSlaveInTheFuture(slave, request);
+                }
+
+            } finally {
+                lock.unlock();
             }
         }
     }
@@ -145,7 +153,19 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
 
     protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
-        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 5, TimeUnit.SECONDS);
+        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 300, TimeUnit.MILLISECONDS);
+    }
+
+    private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {
+        final int currentSlaveAvailability  = slave.getAvailability().get();
+        final int slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
+        if(slaveAvailabilityAfterCompute >= 0) {
+            slave.getAvailability().set(slaveAvailabilityAfterCompute);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
 

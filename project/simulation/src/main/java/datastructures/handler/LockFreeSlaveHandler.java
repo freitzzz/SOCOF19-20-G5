@@ -92,7 +92,16 @@ public class LockFreeSlaveHandler extends SlaveHandler {
             final Optional<Slave> optionalSlave =  this.slaves.parallelStream().filter(slave1 -> slave1 != slave).findAny();
 
             if(optionalSlave.isPresent()) {
-                optionalSlave.get().process(request, this);
+
+                final Slave chosenSlave = optionalSlave.get();
+
+                if(tryReserveSlaveAvailability(chosenSlave, request)) {
+
+                    chosenSlave.process(request, this);
+
+                } else {
+                    this.rescheduleRequestToSlaveInTheFuture(slave, request);
+                }
             } else {
                 this.rescheduleRequestToSlaveInTheFuture(slave, request);
             }
@@ -107,7 +116,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
-        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 5, TimeUnit.SECONDS);
+        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 1, TimeUnit.SECONDS);
     }
 
     private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {
@@ -123,7 +132,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     private boolean tryUnreserveSlaveAvailability(final Slave slave, final Request request) {
-        boolean unreserved = false;
+        boolean unreserved = true;
         final int currentSlaveAvailability  = slave.getAvailability().get();
         final int slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
         if(slaveAvailabilityAfterCompute <= 100) {

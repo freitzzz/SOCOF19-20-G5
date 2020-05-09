@@ -1,7 +1,6 @@
 package datastructures.handler;
 
 import datastructures.*;
-import datastructures.list.FixedSizeLockFreeList;
 import datastructures.list.LockBasedList;
 import datastructures.map.LockBasedMap;
 import master.Master;
@@ -19,7 +18,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     private LockBasedList<Slave> slaves;
 
-    private LockBasedMap<Integer, LockBasedList<Result>> computationResults = new LockBasedMap<>();
+    protected final LockBasedMap<Integer, LockBasedList<Result>> computationResults = new LockBasedMap<>();
 
     private final ScheduledExecutorService rescheduleExecutor;
 
@@ -45,49 +44,53 @@ public class LockBasedSlaveHandler extends SlaveHandler{
                 currentSlaveAvailability  = slave.getAvailability().get();
                 slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
                 if(slaveAvailabilityAfterCompute >= 0) {
+                    slave.getAvailability().set(slaveAvailabilityAfterCompute);
                     SlaveToSchedule slave1 = new SlaveToSchedule(slave, true);
                     slavesToSchedule.add(slave1);
+                }
+                else {
                     slave.getAvailability().set(slaveAvailabilityAfterCompute);
+                    SlaveToSchedule slave1 = new SlaveToSchedule(slave, false);
+                    slavesToSchedule.add(slave1);
                 }
             }
-            this.scheduler.schedule(slavesToSchedule, request, this);
 
+            this.scheduler.schedule(slavesToSchedule, request, this);
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    public void pushResult(Result result) {
-            System.out.println("In pushResult, thread " + Thread.currentThread().getId() + " waiting to get lock");
-            lock.lock();
-            try {
-                System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
-
-                final LockBasedList<Result> results = computationResults.get(result.getRequestID());
-                results.add(result);
-                if (results.hasReachedMaxSize()) {
-                    final int finalResultSum;
-                    Result finalResult;
-                    switch (result.getOperation()) {
-                        case ADD:
-                            finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
-                            finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
-                            break;
-                        case MULTIPLY:
-                            finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1, (i, i1) -> i * i1);
-                            finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unknown operation");
-                    }
-                    computationResults.remove(result.getRequestID());
-                    super.master.receiveResult(finalResult);
+    public void pushResult(final Result result) {
+        System.out.println("In pushResult, thread " + Thread.currentThread().getId() + " waiting to get lock");
+        lock.lock();
+        try {
+            System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
+            final LockBasedList<Result> results = computationResults.get(result.getRequestID());
+            results.add(result);
+            if (results.hasReachedMaxSize()) {
+                final int finalResultSum;
+                Result finalResult;
+                switch (result.getOperation()) {
+                    case ADD:
+                        finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
+                        finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
+                        break;
+                    case MULTIPLY:
+                        finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1, (i, i1) -> i * i1);
+                        finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown operation");
                 }
-            } finally {
-                lock.unlock();
+                computationResults.remove(result.getRequestID());
+                super.master.receiveResult(finalResult);
             }
+        } finally {
+            lock.unlock();
         }
+    }
 
     @Override
     public void reportPerformance(Slave slave) {

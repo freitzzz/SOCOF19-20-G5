@@ -6,6 +6,8 @@ import datastructures.scheduler.SlaveScheduler;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.internal.verification.api.VerificationData;
+import org.mockito.verification.VerificationMode;
 import slave.Slave;
 import master.Master;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class LockBasedSlaveHandlerTest {
@@ -64,7 +67,7 @@ public class LockBasedSlaveHandlerTest {
         slaveHandler.requestSlaves(codeExecutionRequest);
 
         slaves.forEach(slave -> {
-            verify(slave, times(1)).getAvailability();
+            verify(slave, times(2)).getAvailability();
             verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
         });
 
@@ -74,6 +77,7 @@ public class LockBasedSlaveHandlerTest {
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
     }
+
     @Test
     public void ensureSlaveIsNotScheduledIfAvailabilityWasNotReserved() {
 
@@ -98,28 +102,29 @@ public class LockBasedSlaveHandlerTest {
 
         slaveHandler.requestSlaves(codeExecutionRequest);
 
-        List<Slave> expectedSlavesScheduledForCompute = new ArrayList<>();
+        final List<SlaveToSchedule> expectedSlavesScheduledForCompute = new ArrayList<>();
 
-        expectedSlavesScheduledForCompute.add(slaves.get(0));
-        expectedSlavesScheduledForCompute.add(slaves.get(1));
-        expectedSlavesScheduledForCompute.add(slaves.get(3));
-        expectedSlavesScheduledForCompute.add(slaves.get(4));
+        expectedSlavesScheduledForCompute.add(new SlaveToSchedule(slaves.get(0), true));
+        expectedSlavesScheduledForCompute.add(new SlaveToSchedule(slaves.get(1), true));
+        expectedSlavesScheduledForCompute.add(new SlaveToSchedule(slaves.get(2), false));
+        expectedSlavesScheduledForCompute.add(new SlaveToSchedule(slaves.get(3), true));
+        expectedSlavesScheduledForCompute.add(new SlaveToSchedule(slaves.get(4), true));
 
-        expectedSlavesScheduledForCompute.forEach(slave -> {
-            verify(slave, times(1)).getAvailability();
-            verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
-        });
+        expectedSlavesScheduledForCompute.
+                parallelStream()
+                .filter(slaveToSchedule -> slaveToSchedule.slave != slaves.get(2))
+                .forEach(slaveToSchedule -> {
+                    verify(slaveToSchedule.slave, times(2)).getAvailability();
+                    verify(slaveToSchedule.slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
+                });
 
-        verify(slaves.get(2), times(1)).getAvailability();
+        verify(slaves.get(2), times(2)).getAvailability();
         verify(slaves.get(2), times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
 
-        List<SlaveToSchedule> fSlaves = expectedSlavesScheduledForCompute.parallelStream().map(s -> new SlaveToSchedule(s,true)).collect(Collectors.toList());
-
-        verify(scheduler, only()).schedule(fSlaves, codeExecutionRequest, slaveHandler);
+        verify(scheduler, times(1)).schedule(expectedSlavesScheduledForCompute, codeExecutionRequest, slaveHandler);
 
         verify(master, never()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
     }
-
     @Test
     public void ensureNoSlavesAreNotScheduledForComputeIfNoSlaveIsAvailableToBeReserved() {
 
@@ -133,31 +138,17 @@ public class LockBasedSlaveHandlerTest {
         slaveHandler.requestSlaves(codeExecutionRequest);
 
         slaves.forEach(slave -> {
-            verify(slave, times(1)).getAvailability();
+            verify(slave, times(2)).getAvailability();
             verify(slave, times(1)).getAvailabilityReducePerCompute(codeExecutionRequest);
         });
 
-        verify(scheduler, never()).schedule(any(List.class), any(CodeExecutionRequest.class), any(SlaveHandler.class));
+        final List<SlaveToSchedule> slavesToSchedule = new ArrayList<>();
 
-        verify(master, only()).receiveRequestCouldNotBeScheduled(codeExecutionRequest);
-    }
-    @Test
-    public void ensureSlavesReportPerformanceIndexIfRequestIsReportPerformanceIndexRequest() {
+        for (Slave slave : slaves) {
+            slavesToSchedule.add(new SlaveToSchedule(slave, false));
+        }
 
-        slaves.forEach(slave -> {
-            when(slave.getPerformanceIndex()).thenReturn(1);
-            when(slave.getAvailabilityReducePerCompute(reportPerformanceIndexRequest)).thenReturn(0);
-            when(slave.getAvailability()).thenReturn(new AtomicInteger(100));
-        });
-
-        SlaveHandler slaveHandler = new LockBasedSlaveHandler(scheduler, master, slaves);
-
-        slaveHandler.requestSlaves(reportPerformanceIndexRequest);
-
-        slaves.forEach(slave -> verify(slave, atMostOnce()).process(reportPerformanceIndexRequest, slaveHandler));
-
-        verify(scheduler, never()).schedule(anyList(), any(CodeExecutionRequest.class), any(SlaveHandler.class));
-
+        verify(scheduler, times(1)).schedule(slavesToSchedule, codeExecutionRequest, slaveHandler);
     }
 
     @Test
@@ -179,6 +170,8 @@ public class LockBasedSlaveHandlerTest {
         when(result.getRequestID()).thenReturn(1);
         when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
+        slaveHandler.notifyScheduledRequests(codeExecutionRequest, slaves.size());
+
         // don't push the result of the last slave
 
         for(int i = 0; i < slaves.size() - 1; i++) {
@@ -197,7 +190,86 @@ public class LockBasedSlaveHandlerTest {
 
         verify(result, times(slaves.size())).getValue();
 
-        verify(master, only()).receiveResult(any(Result.class));
+        verify(master, times(1)).receiveResult(any(Result.class));
+    }
+
+    @Test
+    public void ensureOnNotifyScheduledRequestIfTheRequestIsCodeExecutionRequestThenTheAmountOfSchedulesIsAllocatedInComputationResultsMap() {
+
+        LockBasedSlaveHandler slaveHandler = new LockBasedSlaveHandler(scheduler, master, slaves);
+
+        assertNull(slaveHandler.computationResults.get(codeExecutionRequest.getRequestID()));
+
+        slaveHandler.notifyScheduledRequests(codeExecutionRequest, 5);
+
+        assertNotNull(slaveHandler.computationResults.get(codeExecutionRequest.getRequestID()));
+
+
+    }
+
+    @Test
+    public void ensureOnReportCouldNotProcessRequestIfTheRequestIsReportPerformanceIndexRequestThenTheRequestIsRescheduledInTheFuture() {
+
+        LockBasedSlaveHandler slaveHandler = spy(new LockBasedSlaveHandler(scheduler, master, slaves));
+
+        final Slave slave = slaves.get(0);
+
+        final Request request = reportPerformanceIndexRequest;
+
+        slaveHandler.reportCouldNotProcessRequest(slave, request);
+
+        verify(slaveHandler, times(1)).rescheduleRequestToSlaveInTheFuture(slave, request);
+
+    }
+
+    @Test
+    public void ensureOnReportCouldNotProcessRequestIfTheRequestIsCodeExecutionRequestAndThereIsAtLeastTwoSlavesForScheduleThenTheRequestIsScheduleToOneOfThese() {
+
+        LockBasedSlaveHandler slaveHandler = spy(new LockBasedSlaveHandler(scheduler, master, slaves));
+
+        final Slave slave = slaves.get(0);
+
+        final Request request = codeExecutionRequest;
+
+        slaveHandler.reportCouldNotProcessRequest(slave, request);
+
+        verify(slave, never()).process(request, slaveHandler);
+
+        final int[] numberOfTimesProcessCalled = {0};
+
+        slaves.parallelStream()
+                .filter(slave1 -> slave1 != slave)
+                .forEach(slave1 -> verify(slave1, new VerificationMode() {
+                    @Override
+                    public void verify(VerificationData data) {
+                        if(data.getAllInvocations().size() > 0) {
+                            numberOfTimesProcessCalled[0]++;
+                        }
+                    }
+
+                    @Override
+                    public VerificationMode description(String description) {
+                        return null;
+                    }
+                }).process(request, slaveHandler));
+
+        assertEquals(numberOfTimesProcessCalled[0], 1);
+    }
+
+    @Test
+    public void ensureOnReportCouldNotProcessRequestIfTheRequestIsCodeExecutionRequestAndThereIsOnlyOneSlaveForScheduleThenTheRequestIsRescheduledInTheFutureForTheSlave() {
+
+        final List<Slave> availableSlaves = slaves.subList(0, 1);
+
+        LockBasedSlaveHandler slaveHandler = spy(new LockBasedSlaveHandler(scheduler, master, availableSlaves));
+
+        final Slave slave = availableSlaves.get(0);
+
+        final Request request = codeExecutionRequest;
+
+        slaveHandler.reportCouldNotProcessRequest(slave, request);
+
+        verify(slaveHandler, times(1)).rescheduleRequestToSlaveInTheFuture(slave, request);
     }
 
     @Test
@@ -218,11 +290,10 @@ public class LockBasedSlaveHandlerTest {
 
         when(result.getRequestID()).thenReturn(1);
 
+        when(result.getValue()).thenReturn(1);
         when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
-        when(result.getValue()).thenReturn(1);
-
-        // don't push the result of the last slave
+        slaveHandler.notifyScheduledRequests(codeExecutionRequest, slaves.size());
 
         for(int i = 0; i < slaves.size(); i++) {
             slaveHandler.pushResult(result);
@@ -230,7 +301,7 @@ public class LockBasedSlaveHandlerTest {
 
         Result finalResult = new Result(slaves.size() * 1, 1,CodeExecutionRequest.Operation.ADD);
 
-        verify(master, only()).receiveResult(finalResult);
+        verify(master, times(1)).receiveResult(finalResult);
     }
 
     @Test
@@ -246,7 +317,7 @@ public class LockBasedSlaveHandlerTest {
 
         slaveHandler.reportPerformance(slave);
 
-        verify(master, only()).receiveSlavePerformanceDetails(expectedPerformanceDetails);
+        verify(master, times(1)).receiveSlavePerformanceDetails(expectedPerformanceDetails);
 
     }
 
@@ -263,72 +334,8 @@ public class LockBasedSlaveHandlerTest {
 
         slaveHandler.reportAvailability(slave, codeExecutionRequest);
 
-        verify(master, only()).receiveSlaveAvailability(expectedAvailabilityDetails);
+        verify(master, times(1)).receiveSlaveAvailability(expectedAvailabilityDetails);
 
     }
-
-    @Test
-    public void ensureSlaveHandlerHandlesConcurrentCallsAsExpected() {
-
-        List<Slave> slaves = new ArrayList<>();
-
-        Master master = mock(Master.class);
-
-        SlaveScheduler scheduler = new PerformanceIndexSlaveScheduler();
-
-        for(int i = 0; i < 5; i++) {
-
-            slaves.add(new Slave(i + 1));
-
-        }
-
-        LockBasedSlaveHandler slaveHandler = new LockBasedSlaveHandler(scheduler, master, slaves);
-
-        final List<Integer> values = new ArrayList<>();
-
-        for(int i = 0; i < 1000; i++) {
-            values.add(i);
-        }
-
-        final int expectedSum = values.parallelStream().reduce(0, (integer, integer2) -> integer + integer2);
-
-        doAnswer(invocation -> {
-
-            slaveHandler.requestSlaves(invocation.getArgument(0));
-
-            return null;
-        }).when(master).receiveRequestCouldNotBeScheduled(any(Request.class));
-
-        doAnswer(invocation -> {
-
-            return null;
-        }).when(master).receiveSlaveAvailability(any(AvailabilityDetails.class));
-
-        final AtomicInteger timesInvoked = new AtomicInteger();
-
-        doAnswer(invocation -> {
-            timesInvoked.getAndIncrement();
-            Result result = invocation.getArgument(0);
-            if(result.getValue() != expectedSum) {
-                throw new Exception();
-            }
-            return null;
-        }).when(master).receiveResult(any(Result.class));
-
-        for(int i = 0; i < 1000; i++) {
-            slaveHandler.requestSlaves(new CodeExecutionRequest(values, i, CodeExecutionRequest.Operation.ADD));
-        }
-
-        ((Runnable) () -> {
-            while (timesInvoked.intValue() < 1000) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }).run();
-    }
-
 
 }

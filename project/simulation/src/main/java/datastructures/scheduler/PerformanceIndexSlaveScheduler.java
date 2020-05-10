@@ -23,7 +23,7 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
 
         Collections.sort(slaves);
 
-        final List<Runnable> asd = new ArrayList<>();
+        final List<Runnable> processList = new ArrayList<>();
 
         for (SlaveToSchedule slave : slaves) {
             overallPerformance+=slave.slave.getPerformanceIndex();
@@ -35,9 +35,8 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
                 List<Integer> numbersSlice = request.getNumbers().subList(startIndex, numbersSize);
 
                 final int finalI = i;
-                asd.add(() -> tryToProcess(slaves.get(finalI),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler));
+                processList.add(() -> tryToProcess(slaves.get(finalI),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler));
 
-                //slaves.get(i).process(new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
                 i++;
                 break;
             }
@@ -60,9 +59,8 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
             List<Integer> numbersSlice = request.getNumbers().subList(startIndex, endIndex);
 
             int finalI1 = i;
-            asd.add(() -> tryToProcess(slaves.get(finalI1),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler));
+            processList.add(() -> tryToProcess(slaves.get(finalI1),new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()),slaveHandler));
 
-            //slaves.get(i).process(new CodeExecutionRequest(numbersSlice, request.getRequestID(), request.getOp()), slaveHandler);
 
             if(endIndex == numbersSize){
                 i++;
@@ -72,20 +70,15 @@ public final class PerformanceIndexSlaveScheduler implements SlaveScheduler {
             }
         }
 
-        slaveHandler.notifyScheduledRequests(request, asd.size());
+        slaveHandler.notifyScheduledRequests(request, processList.size());
 
-        asd.forEach(Runnable::run);
+        processList.forEach(Runnable::run);
 
-        /*for(; i< slaves.size();i++){
+        for(; i< slaves.size();i++){
             unrequestedSlaves.add(slaves.get(i));
-        }*/
-        /*for(SlaveToSchedule s : unrequestedSlaves){
+        }
 
-
-
-            tryToProcess(s,new CodeExecutionRequest(Collections.emptyList(),request.getRequestID(),request.getOp()),slaveHandler);
-            //s.process(new CodeExecutionRequest(Collections.emptyList(),request.getRequestID(),request.getOp()),slaveHandler);
-        }*/
+        unrequestedSlaves.forEach( x -> slaveHandler.reportAvailability(x.slave,request));
     }
 
     private void scheduleReport(List<SlaveToSchedule> slaves, ReportPerformanceIndexRequest request, SlaveHandler slaveHandler){

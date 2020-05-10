@@ -33,13 +33,9 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     @Override
     public void requestSlaves(Request request) {
-        int slaveAvailabilityAfterCompute = 0;
-        int currentSlaveAvailability = 0;
         List<SlaveToSchedule> slavesToSchedule = new ArrayList<>();
-        System.out.println("In requestSlaves, thread " + Thread.currentThread().getId()+ " waiting to get lock");
         lock.lock();
         try{
-            System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
             for(Slave slave : slaves){
 
                 final boolean reserved = tryReserveSlaveAvailability(slave, request);
@@ -50,6 +46,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
             }
 
             this.scheduler.schedule(slavesToSchedule, request, this);
+
         } finally {
             lock.unlock();
         }
@@ -57,10 +54,8 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     @Override
     public void pushResult(final Result result) {
-        System.out.println("In pushResult, thread " + Thread.currentThread().getId() + " waiting to get lock");
         lock.lock();
         try {
-            System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
             final LockBasedList<Result> results = computationResults.get(result.getRequestID());
             results.add(result);
             if (results.hasReachedMaxSize()) {
@@ -96,10 +91,8 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     public void reportAvailability(Slave slave, Request request) {
         int slaveAvailabilityAfterCompute = 0;
         int currentSlaveAvailability = 0;
-        //System.out.println("In reportAvailability, thread " + Thread.currentThread().getId()+ " waiting to get lock");
         lock.lock();
         try {
-            //System.out.println("Count of locks held by thread " + Thread.currentThread().getId() + " - " + lock.getHoldCount());
             currentSlaveAvailability  = slave.getAvailability().get();
             slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
             if(slaveAvailabilityAfterCompute <= 100) {

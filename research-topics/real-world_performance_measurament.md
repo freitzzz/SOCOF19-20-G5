@@ -32,8 +32,8 @@ According to how the master distributes tasks and collects results from the slav
 Considering that the master/slave program was build using a threads-and-locks model lets try and determine how we can  measure the performance of a node in this case measure the performance of a slave node.
 To tackle the issue, first we need to understand the strengths and weaknesses of the threads-and-locks programming and the direct influence it has on the slave nodes.
 
-** write things about threads and locks and their ups and downs
-** maybe add some text about amdahl law
+---> write things about threads and locks and their ups and downs
+---> maybe add some text about amdahl law
 
 In order to measure the performance we need to define some metrics to helps us validate the implementation.
 

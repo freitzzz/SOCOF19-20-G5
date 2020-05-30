@@ -10,7 +10,7 @@ Given the requirements for the platforms, it is proposed that a cluster of Raspb
 
 <center>Figure X - Cluster of 4 Raspberry Pi serving a Kubernetes Cluster, taken from https://medium.com/nycdev/k8s-on-pi-9cc14843d43</center>
 
-Alternatively to the usage of Raspberry Pi as the computers, other market computers/boards can be used [11] such as the `ASUS Tinker Board S` [12], but might be more expensive and the CPU ISA might not support the CAS operation. Also alternatively to building a cluster with physical hardware, one can also assemble the infrastructure in the cloud, but that also be much more expensive for the outcomes of the solution.
+Alternatively to the usage of Raspberry Pi as the computers, other market computers/boards can be used [11] such as the `ASUS Tinker Board S` [12], but might be more expensive and the CPU ISA might not support the CAS operation, which is necessary for Master lock-free data structure. Also alternatively to building a cluster with physical hardware, one can also assemble the infrastructure in the cloud, but that also be much more expensive for the outcomes of the solution.
 
 ## Sources
 

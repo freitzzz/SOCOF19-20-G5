@@ -3,7 +3,7 @@ package slave;
 import datastructures.ReportPerformanceIndexRequest;
 import datastructures.handler.SlaveHandler;
 
-public class ReportPerformanceIndexThread extends Thread{
+public class ReportPerformanceIndexThread extends Thread {
 
     private final ReportPerformanceIndexRequest request;
 
@@ -20,9 +20,9 @@ public class ReportPerformanceIndexThread extends Thread{
     @Override
     public void run() {
         super.run();
-
-        slaveHandler.reportPerformance(slave);
-
-        slaveHandler.reportAvailability(slave, request);
+        if (!isInterrupted()) {
+            slaveHandler.reportPerformance(slave);
+            slaveHandler.reportAvailability(slave, request);
+        }
     }
 }

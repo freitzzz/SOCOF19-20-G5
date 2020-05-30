@@ -14,8 +14,8 @@ public class ComputeThread extends Thread {
     private CodeExecutionRequest request;
     private Slave s;
 
-    public ComputeThread(CodeExecutionRequest r, SlaveHandler slaveMemory,Slave s){
-        this.numbers= r.getNumbers();
+    public ComputeThread(CodeExecutionRequest r, SlaveHandler slaveMemory, Slave s) {
+        this.numbers = r.getNumbers();
         this.slaveMemory = slaveMemory;
         this.s = s;
         this.request = r;
@@ -26,30 +26,52 @@ public class ComputeThread extends Thread {
         super.run();
 
         Integer res;
-        switch(request.getOp()){
-            case ADD: res = sum(); break;
-            case MULTIPLY: res = mult(); break;
-            default: throw new IllegalArgumentException("Operation unknown");
+        try {
+            switch (request.getOp()) {
+                case ADD:
+                    res = sum();
+                    break;
+                case MULTIPLY:
+                    res = mult();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Operation unknown");
+            }
+
+            if (!isInterrupted()) {
+                Result r = new Result(res, request.getRequestID(), request.getOp());
+
+                slaveMemory.pushResult(r);
+                slaveMemory.reportAvailability(s, request);
+            } else {
+                slaveMemory.reportCouldNotProcessRequest(s, request);
+            }
+
+        } catch (InterruptedException ex) {
+            slaveMemory.reportCouldNotProcessRequest(s, request);
         }
 
-        Result r = new Result(res,request.getRequestID(),request.getOp());
 
-        slaveMemory.pushResult(r);
-        slaveMemory.reportAvailability(s, request);
     }
 
-    private int sum() {
+    private int sum() throws InterruptedException {
         Integer res = 0;
-        for( Integer i : numbers){
-            res+=i;
+        for (Integer i : numbers) {
+            if (isInterrupted()) {
+                throw new InterruptedException();
+            }
+            res += i;
         }
         return res;
     }
 
-    private int mult(){
+    private int mult() throws InterruptedException {
         Integer res = 1;
-        for( Integer i : numbers){
-            res*=i;
+        for (Integer i : numbers) {
+            if (isInterrupted()) {
+                throw new InterruptedException();
+            }
+            res *= i;
         }
         return res;
     }

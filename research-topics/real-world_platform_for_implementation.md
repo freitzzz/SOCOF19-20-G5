@@ -12,6 +12,7 @@ Given the requirements for the platforms, it is proposed that a cluster of Raspb
 
 Alternatively to the usage of Raspberry Pi as the computers, other market computers/boards can be used [11] such as the `ASUS Tinker Board S` [12], but might be more expensive and the CPU ISA might not support the CAS operation, which is necessary for Master lock-free data structure. Also alternatively to building a cluster with physical hardware, one can also assemble the infrastructure in the cloud, but that also be much more expensive for the outcomes of the solution.
 
+
 ## Sources
 
 1 - https://www.open-mpi.org/, accessed on 30/05/2020.

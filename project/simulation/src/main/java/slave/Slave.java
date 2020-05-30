@@ -7,6 +7,7 @@ import datastructures.handler.SlaveHandler;
 
 import java.util.Random;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,7 +16,7 @@ public class Slave implements Comparable<Slave> {
     //declare variables
     private int performanceIndex;
     private AtomicInteger availability;
-    private final Executor exec;
+    private final ExecutorService exec;
     private final Random randomFailureMachine;
 
     //implement setters and getters
@@ -28,16 +29,16 @@ public class Slave implements Comparable<Slave> {
     }
 
     //add constructor
-    public Slave(int performanceIndex){
+    public Slave(int performanceIndex) {
         this.performanceIndex = performanceIndex;
         this.availability = new AtomicInteger(100);
         this.exec = Executors.newFixedThreadPool(performanceIndex);
         this.randomFailureMachine = new Random();
     }
 
-    public void process(Request request, SlaveHandler slaveHandler){
+    public void process(Request request, SlaveHandler slaveHandler) {
 
-        if(tryToRandomlyFail()) {
+        if (tryToRandomlyFail()) {
             slaveHandler.reportCouldNotProcessRequest(this, request);
             slaveHandler.reportAvailability(this, request);
         } else {
@@ -56,11 +57,15 @@ public class Slave implements Comparable<Slave> {
 
     public int getAvailabilityReducePerCompute(Request request) {
 
-        if(request instanceof CodeExecutionRequest) {
+        if (request instanceof CodeExecutionRequest) {
             return 25; // this may vary
         } else {
             return 0;
         }
+    }
+
+    public void shutdown() {
+        exec.shutdownNow();
     }
 
     // This method needs to be spied on tests, otherwise it will fail tests randomly

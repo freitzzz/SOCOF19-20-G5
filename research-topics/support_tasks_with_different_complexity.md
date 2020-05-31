@@ -28,6 +28,8 @@ In [2] it is also presented two types of communication scope, point-to-point whe
 * Gather - A task receives different information from other tasks and combines it.
 * Reduction - A task receives different information from other tasks and computes the final result.
 
+![Communication Scopes](../figures/CommunicationScope.png)
+
 ## Load Balancing / Work distribution
 
 Load Balancing is used to distribute work between several tasks while making sure that none of them are idle if there is work to be computed. This is important for parallel programs in order to reduce the time needed for finishing the overall computation.

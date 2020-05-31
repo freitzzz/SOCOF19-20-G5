@@ -144,6 +144,25 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         }
     }
 
+    @Override
+    public Slave removeSlave(Slave slave) {
+        this.slaves.remove(slave);
+
+        slave.shutdown();
+
+        return slave;
+    }
+
+    @Override
+    public void addSlave(Slave slave) {
+        this.slaves.add(slave);
+    }
+
+    @Override
+    public List<Slave> availableSlaves() {
+        return new ArrayList<>(this.slaves);
+    }
+
 
     protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
         this.rescheduleExecutor.schedule(() -> slave.process(request, this), 300, TimeUnit.MILLISECONDS);

@@ -6,6 +6,8 @@ import datastructures.scheduler.SlaveScheduler;
 import master.Master;
 import slave.Slave;
 
+import java.util.List;
+
 public abstract class SlaveHandler {
 
     protected final SlaveScheduler scheduler;
@@ -26,6 +28,10 @@ public abstract class SlaveHandler {
     public abstract void reportAvailability(Slave slave, Request request);
     public abstract void reportCouldNotProcessRequest(Slave slave, Request request);
     public abstract void notifyScheduledRequests(Request request, int numberOfSchedules);
+    public abstract Slave removeSlave(Slave slave);
+    public abstract void addSlave(Slave slave);
+
+    public abstract List<Slave> availableSlaves();
 
     public enum Type {
         LOCK_BASED,

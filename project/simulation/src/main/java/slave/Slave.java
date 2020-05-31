@@ -6,7 +6,6 @@ import datastructures.Request;
 import datastructures.handler.SlaveHandler;
 
 import java.util.Random;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,20 +37,29 @@ public class Slave implements Comparable<Slave> {
 
     public void process(Request request, SlaveHandler slaveHandler) {
 
-        if (tryToRandomlyFail()) {
-            slaveHandler.reportCouldNotProcessRequest(this, request);
-            slaveHandler.reportAvailability(this, request);
-        } else {
-            final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
+        final boolean isCodeExecutionRequest = request instanceof CodeExecutionRequest;
 
-            Runnable taskToBeExecuted;
+        if(!exec.isShutdown()) {
 
-            if (isCodeExecutionRequest) {
-                taskToBeExecuted = new ComputeThread((CodeExecutionRequest) request, slaveHandler, this);
+            if (tryToRandomlyFail()) {
+                slaveHandler.reportCouldNotProcessRequest(this, request);
+                slaveHandler.reportAvailability(this, request);
             } else {
-                taskToBeExecuted = new ReportPerformanceIndexThread((ReportPerformanceIndexRequest) request, slaveHandler, this);
+
+
+                Runnable taskToBeExecuted;
+
+                if (isCodeExecutionRequest) {
+                    taskToBeExecuted = new ComputeThread((CodeExecutionRequest) request, slaveHandler, this);
+                } else {
+                    taskToBeExecuted = new ReportPerformanceIndexThread((ReportPerformanceIndexRequest) request, slaveHandler, this);
+                }
+                exec.execute(taskToBeExecuted);
             }
-            exec.execute(taskToBeExecuted);
+        } else {
+            if(isCodeExecutionRequest) {
+                slaveHandler.reportCouldNotProcessRequest(this, request);
+            }
         }
     }
 

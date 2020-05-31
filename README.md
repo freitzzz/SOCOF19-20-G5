@@ -6,7 +6,7 @@ The development was divided in three parts, being the first two the implementati
 
 ## Coding Guidelines
 
-This project was developed using Java with the JDK version 8. All the code is written in english and the camelCase as a naming convention. For testing we used JUnit 4 and all external dependencies present in unit tests were mocked using Mockito.
+This project was developed using Java with the JDK version 8. All the code is written in english and camelCase is used as a naming convention. For testing we used the JUnit 4 library and all external dependencies present in unit tests were mocked with Mockito.
 
 ## Domain Concepts
 

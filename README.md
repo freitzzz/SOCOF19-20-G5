@@ -61,6 +61,14 @@ In the flowchart below it is possible to observe the process described above tha
 
 ## System Integration and Analysis (Part 3)
 
+### Research topic analysis
+
+ * [What should be done to support tasks with different computational complexity (not necessarily
+resulting from data decomposition operations)?](research-topics/support_tasks_with_different_complexity.md)
+ * [How to guarantee that tasks don’t interfere with the node natural functionality?](research-topic/task_isolation.md)
+ * [How to measure the performance of a node in a real case?](research-topic/real-world_performance_measurament.md)
+ * [What languages and platforms to choose in a real-world implementation and why?](reseearch-topic/real-world_platform_for_implementation.md)
+
 ### Team Members
 
 `Francisco Machado 1150445@isep.ipp.pt`

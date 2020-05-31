@@ -7,6 +7,7 @@ import datastructures.scheduler.SlaveScheduler;
 import master.Master;
 import slave.Slave;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -115,8 +116,27 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         }
     }
 
+    @Override
+    public Slave removeSlave(Slave slave) {
+        this.slaves.remove(slave);
+
+        slave.shutdown();
+
+        return slave;
+    }
+
+    @Override
+    public void addSlave(Slave slave) {
+        this.slaves.add(slave);
+    }
+
+    @Override
+    public List<Slave> availableSlaves() {
+        return new ArrayList<>(this.slaves);
+    }
+
     protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
-        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 1, TimeUnit.SECONDS);
+        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 35, TimeUnit.SECONDS);
     }
 
     private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {

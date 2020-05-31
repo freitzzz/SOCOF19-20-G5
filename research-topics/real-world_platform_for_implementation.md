@@ -1,5 +1,7 @@
 # What languages and platforms to choose in a real-world implementation and why?
 
+## Introduction
+
 Our ambition may be to innovate and find a solution which grants us of high-levels of performance, with literally no time splits between the request start and the response arrival, by designing our desires as such, but this is theoretically speaking, where the concept of utopy takes place. In practice our desires are limitted to computational resources that are given by the computers which will perform the computation requests and the infrastructure that supports it. Technically speaking, if our problem is the lack of computational resources, we can always obtain more of these and scale our solution in space. Yet this brings us a bigger problem which is the cost of doing such. But we can be smarter and play with what we have and what is available to us, by conjugating our problem domain with the available technologies and computers. That being said it is possible to express this conjugation in two extrinsinc domains: platform (computer) and (programming) language.
 
 ## Platform(s) Analysis and Decisions

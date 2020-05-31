@@ -47,6 +47,21 @@ public class TestSlaveHandler extends SlaveHandler {
 
     }
 
+    @Override
+    public Slave removeSlave(Slave slave) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addSlave(Slave slave) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Slave> availableSlaves() {
+        throw new UnsupportedOperationException();
+    }
+
 
     public Result getResult(int id){
         while(true){

@@ -1,4 +1,7 @@
+import datastructures.handler.SlaveHandler;
+import datastructures.scheduler.PerformanceIndexSlaveScheduler;
 import master.Master;
+import slave.Slave;
 
 import java.util.*;
 
@@ -20,6 +23,13 @@ public class Simulation {
 
         public Cli() {
             this.scanner = new Scanner(System.in);
+            final List<Slave> slaves = new ArrayList<>();
+            slaves.add(new Slave(3));
+            slaves.add(new Slave(4));
+            slaves.add(new Slave(3));
+            slaves.add(new Slave(2));
+            masters.add(new Master(slaves, new PerformanceIndexSlaveScheduler(), SlaveHandler.Type.LOCK_FREE, 4));
+            masters.add(new Master(slaves, new PerformanceIndexSlaveScheduler(), SlaveHandler.Type.LOCK_BASED, 4));
         }
 
         public void start() {
@@ -53,18 +63,18 @@ public class Simulation {
         @Override
         public void show(final Cli cli) {
             String content = "Welcome to Simulation (Part 1) app.\n" +
-               "This is a command line interface that you can interact with. The interactions are the following:\n" +
-               "1 - Build a new master for simulation\n" +
-               "2 - Start a simulation\n" +
-               "3 - Debug mode\n" +
-               "You can, at any time, go back to this menu by pressing the key 'h' and show again the page you are on with the key 'r'\n";
+                    "This is a command line interface that you can interact with. The interactions are the following:\n" +
+                    "1 - Build a new master for simulation\n" +
+                    "2 - Start a simulation\n" +
+                    "3 - Debug mode\n" +
+                    "You can, at any time, go back to this menu by pressing the key 'h' and show again the page you are on with the key 'r'\n";
             System.out.print(content);
 
             Page nextPage = null;
 
             final Scanner scanner = cli.getScanner();
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 switch (input) {
@@ -105,12 +115,12 @@ public class Simulation {
         public void show(final Cli cli) {
             String content = String.format(
                     "Current Master Build: %s\n" +
-                    "1 - Add new slave\n" +
-                    "2 - Add new worker\n" +
-                    "3 - Use Performance Index Slave Scheduler\n" +
-                    "4 - Use Lock-Based Slave Handler\n" +
-                    "5 - Use Lock-Free Slave Handler\n" +
-                    "B - Build Master\n",
+                            "1 - Add new slave\n" +
+                            "2 - Add new worker\n" +
+                            "3 - Use Performance Index Slave Scheduler\n" +
+                            "4 - Use Lock-Based Slave Handler\n" +
+                            "5 - Use Lock-Free Slave Handler\n" +
+                            "B - Build Master\n",
                     builder.toString()
             );
             System.out.print(content);
@@ -119,7 +129,7 @@ public class Simulation {
 
             final Scanner scanner = cli.getScanner();
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 switch (input) {
@@ -166,9 +176,16 @@ public class Simulation {
     private static class SlaveBuilderPage implements Page {
 
         private final Master.MasterBuilder builder;
+        private final Master master;
 
         public SlaveBuilderPage(final Master.MasterBuilder builder) {
             this.builder = builder;
+            this.master = null;
+        }
+
+        public SlaveBuilderPage(final Master master) {
+            this.master = master;
+            this.builder = null;
         }
 
         @Override
@@ -181,24 +198,30 @@ public class Simulation {
 
             final Scanner scanner = cli.getScanner();
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 int chosenNumber = -1;
 
-                try{
+                try {
                     chosenNumber = Integer.parseInt(input);
-                }catch (Exception ignored) {
+                } catch (Exception ignored) {
 
                 }
 
-                if(chosenNumber != -1) {
-                    builder.withSlave(chosenNumber);
+                if (chosenNumber != -1) {
+                    if(builder != null) {
+                        builder.withSlave(chosenNumber);
+                        nextPage = new MasterBuilderPage(builder);
+                    } else {
+                        master.slaveHandler.addSlave(new Slave(chosenNumber));
+                        nextPage = new DebugModePage(master);
+                    }
 
-                    nextPage = new MasterBuilderPage(builder);
-                } else if(input.equals("h")) {
+
+                } else if (input.equals("h")) {
                     nextPage = new InitialPage();
-                } else if(input.equals("r")) {
+                } else if (input.equals("r")) {
                     nextPage = this;
                 } else {
                     System.out.println("\nInvalid Option");
@@ -223,15 +246,15 @@ public class Simulation {
 
             final List<Master> masters = cli.getMasters();
 
-            if(cli.getMasters().isEmpty()) {
+            if (cli.getMasters().isEmpty()) {
                 content = "You haven't build no masters.\n";
             } else {
                 StringBuilder builder = new StringBuilder();
 
                 builder.append("Choose a master:\n");
 
-                for(int i = 0; i < masters.size(); i++) {
-                    builder.append(String.format("%c - %s\n", 48 + i + 1,masters.get(i)));
+                for (int i = 0; i < masters.size(); i++) {
+                    builder.append(String.format("%c - %s\n", 48 + i + 1, masters.get(i)));
                 }
 
                 content = builder.toString();
@@ -239,27 +262,27 @@ public class Simulation {
 
             System.out.print(content);
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 int chosenNumber = -1;
 
-                try{
+                try {
                     chosenNumber = Integer.parseInt(input);
-                }catch (Exception e) {
+                } catch (Exception e) {
 
                 }
 
-                if(chosenNumber != -1){
-                    if(chosenNumber <= masters.size()) {
+                if (chosenNumber != -1) {
+                    if (chosenNumber <= masters.size()) {
                         final Master selectedMaster = masters.get(chosenNumber - 1);
                         nextPage = new SimulationPage(selectedMaster);
                     } else {
                         System.out.println("\nInvalid option");
                     }
-                } else if(input.equals("h")) {
+                } else if (input.equals("h")) {
                     nextPage = new InitialPage();
-                } else if(input.equals("r")) {
+                } else if (input.equals("r")) {
                     nextPage = this;
                 } else {
                     System.out.println("\nInvalid Option");
@@ -295,7 +318,7 @@ public class Simulation {
 
             System.out.print(content);
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 switch (input) {
@@ -306,12 +329,12 @@ public class Simulation {
                         master.requestMultiplicationOfNumbers(randomSequenceOfNumbers("MUL"));
                         break;
                     case "3":
-                        for(int i = 0; i < 100; i++) {
+                        for (int i = 0; i < 100; i++) {
                             master.requestSumOfNumbers(randomSequenceOfNumbers("SUM"));
                         }
                         break;
                     case "4":
-                        for(int i = 0; i < 100; i++) {
+                        for (int i = 0; i < 100; i++) {
                             master.requestMultiplicationOfNumbers(randomSequenceOfNumbers("MUL"));
                         }
                         break;
@@ -337,25 +360,25 @@ public class Simulation {
             final List<Integer> toCalculate = new ArrayList<>();
 
             final int size;
-            if(op == "MUL"){
+            if (op == "MUL") {
                 size = new Random().nextInt(12);
-            }else{
+            } else {
                 size = new Random().nextInt(1000);
             }
 
 
-            for(int j = 1; j < size; j++) {
+            for (int j = 1; j < size; j++) {
 
                 toCalculate.add(j);
 
             }
             int expected;
-            switch(op){
+            switch (op) {
                 case "SUM":
-                    expected = toCalculate.stream().reduce(0,(integer, integer2) -> integer+integer2);
+                    expected = toCalculate.stream().reduce(0, (integer, integer2) -> integer + integer2);
                     break;
                 case "MUL":
-                    expected = toCalculate.stream().reduce(1,(integer, integer2) -> integer*integer2);
+                    expected = toCalculate.stream().reduce(1, (integer, integer2) -> integer * integer2);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown operation");
@@ -381,15 +404,15 @@ public class Simulation {
 
             final List<Master> masters = cli.getMasters();
 
-            if(cli.getMasters().isEmpty()) {
+            if (cli.getMasters().isEmpty()) {
                 content = "You haven't build no masters.\n";
             } else {
                 StringBuilder builder = new StringBuilder();
 
                 builder.append("Choose a master:\n");
 
-                for(int i = 0; i < masters.size(); i++) {
-                    builder.append(String.format("%c - %s\n", 48 + i + 1,masters.get(i)));
+                for (int i = 0; i < masters.size(); i++) {
+                    builder.append(String.format("%c - %s\n", 48 + i + 1, masters.get(i)));
                 }
 
                 content = builder.toString();
@@ -397,27 +420,27 @@ public class Simulation {
 
             System.out.print(content);
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 int chosenNumber = -1;
 
-                try{
+                try {
                     chosenNumber = Integer.parseInt(input);
-                }catch (Exception e) {
+                } catch (Exception e) {
 
                 }
 
-                if(chosenNumber != -1){
-                    if(chosenNumber <= masters.size()) {
+                if (chosenNumber != -1) {
+                    if (chosenNumber <= masters.size()) {
                         final Master selectedMaster = masters.get(chosenNumber - 1);
                         nextPage = new DebugModePage(selectedMaster);
                     } else {
                         System.out.println("\nInvalid option");
                     }
-                } else if(input.equals("h")) {
+                } else if (input.equals("h")) {
                     nextPage = new InitialPage();
-                } else if(input.equals("r")) {
+                } else if (input.equals("r")) {
                     nextPage = this;
                 } else {
                     System.out.println("\nInvalid Option");
@@ -442,7 +465,9 @@ public class Simulation {
             String content = "Welcome to debug mode. The available options are the following:\n" +
                     "1 - Print all slaves performance index\n" +
                     "2 - Print all slaves availability\n" +
-                    "3 - Print slave handler status\n";
+                    "3 - Print slave handler status\n" +
+                    "4 - Remove slave\n" +
+                    "5 - Add slave\n";
 
             System.out.print(content);
 
@@ -450,18 +475,27 @@ public class Simulation {
 
             final Scanner scanner = cli.getScanner();
 
-            while(nextPage == null) {
+            while (nextPage == null) {
                 String input = scanner.nextLine();
 
                 switch (input) {
                     case "1":
-                        master.connectedSlaves.forEach(slave -> System.out.println(slave.getPerformanceIndex()));
+                        master.slaveHandler.availableSlaves().forEach(slave -> System.out.println(slave.getPerformanceIndex()));
+                        nextPage = this;
                         break;
                     case "2":
-                        master.connectedSlaves.forEach(slave -> System.out.println(slave.getAvailability()));
+                        master.slaveHandler.availableSlaves().forEach(slave -> System.out.println(slave.getAvailability()));
+                        nextPage = this;
                         break;
                     case "3":
                         System.out.println(master.slaveHandler);
+                        nextPage = this;
+                        break;
+                    case "4":
+                        nextPage = new DebugModeRemoveSlavePage(master);
+                        break;
+                    case "5":
+                        nextPage = new SlaveBuilderPage(master);
                         break;
                     case "h":
                         nextPage = new InitialPage();
@@ -471,6 +505,85 @@ public class Simulation {
                         break;
                     default:
                         System.out.println("\nInvalid option");
+                }
+            }
+
+            cli.build(nextPage);
+        }
+
+    }
+
+    private static class DebugModeRemoveSlavePage implements Page {
+
+        private final Master master;
+
+        public DebugModeRemoveSlavePage(final Master master) {
+            this.master = master;
+        }
+
+        @Override
+        public void show(final Cli cli) {
+
+            Page nextPage = null;
+
+            final List<Slave> availableSlavesToRemove = master.slaveHandler.availableSlaves();
+
+            StringBuilder content = new StringBuilder();
+
+            if (!availableSlavesToRemove.isEmpty()) {
+
+                content.append("Choose a slave to remove. Press A to randomly choose a slave to remove:\n");
+
+                for (int i = 0; i < availableSlavesToRemove.size(); i++) {
+                    final Slave slave = availableSlavesToRemove.get(i);
+                    content.append(String.format("%d - %s\n", i + 1, slave));
+                }
+
+                content.append("A - Randomly choose slave to remove\n");
+
+            } else {
+                content.append("No slaves are available.\n");
+
+                nextPage = new DebugModePage(master);
+            }
+
+
+            System.out.print(content.toString());
+
+            final Scanner scanner = cli.getScanner();
+
+            while (nextPage == null) {
+                String input = scanner.nextLine();
+
+                int chosenNumber = -1;
+
+                if (input.equals("A")) {
+                    chosenNumber = new Random().nextInt(availableSlavesToRemove.size()) + 1;
+                } else {
+
+                    try {
+                        chosenNumber = Integer.parseInt(input);
+                    } catch (Exception e) {
+
+                    }
+
+                }
+
+                if (chosenNumber != -1) {
+                    if (chosenNumber <= availableSlavesToRemove.size()) {
+                        final Slave selectedSlave = availableSlavesToRemove.get(chosenNumber - 1);
+                        final Slave removedSlave = this.master.slaveHandler.removeSlave(selectedSlave);
+                        System.out.printf("Slave: %s was successfully removed.\n", removedSlave);
+                        nextPage = new DebugModePage(master);
+                    } else {
+                        System.out.println("\nInvalid option");
+                    }
+                } else if (input.equals("h")) {
+                    nextPage = new InitialPage();
+                } else if (input.equals("r")) {
+                    nextPage = this;
+                } else {
+                    System.out.println("\nInvalid Option");
                 }
             }
 

@@ -19,7 +19,6 @@ public class ReportPerformanceIndexThread extends Thread {
 
     @Override
     public void run() {
-        super.run();
         if (!isInterrupted()) {
             slaveHandler.reportPerformance(slave);
             slaveHandler.reportAvailability(slave, request);

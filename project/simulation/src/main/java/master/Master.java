@@ -21,13 +21,9 @@ public class Master {
 
     private volatile int requestPerformed = 0;
 
-    public final List<Slave> connectedSlaves;
-
     public Master(final List<Slave> slavesToConnect, final SlaveScheduler scheduler, final SlaveHandler.Type slaveHandlerType, final int numberOfWorkers) {
 
         List<Slave> connectedSlaves = new ArrayList<>(slavesToConnect);
-
-        this.connectedSlaves = connectedSlaves;
 
         this.executor = Executors.newFixedThreadPool(numberOfWorkers);
 
@@ -111,7 +107,7 @@ public class Master {
                 "executor=" + executor +
                 ", slaveHandler=" + slaveHandler +
                 ", requestPerformed=" + requestPerformed +
-                ", connectedSlaves=" + connectedSlaves +
+                ", connectedSlaves=" + slaveHandler.availableSlaves() +
                 '}';
     }
 

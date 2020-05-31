@@ -23,7 +23,7 @@ As observed in the diagram, besides the concepts that were knew previously, ther
 
 ## Master Node Implementation (Part 2)
 
-### Load balancing algorithm
+### Load Balancing Algorithm
 
 Before applying the load balancing algorithm the scheduler first detects if the request is for reporting the performance index or computing numbers. If it's for reporting performance the scheduler send the request for each slave that is available. Otherwise, if it's a request for computing numbers, the algorithm is applied and before sending the request it verifies if the slave is available and sends it if it is. In case it's not, the scheduler informs the slave handler that a slave could not process a request which is then rescheduled to another slave.
 
@@ -63,13 +63,15 @@ In the flowchart below it is possible to observe the process described above tha
 
 ## System Integration and Analysis (Part 3)
 
-### Research topic analysis
+### Simulation Interface
+
+### Research Topic Analysis
 
  * [What should be done to support tasks with different computational complexity (not necessarily
 resulting from data decomposition operations)?](research-topics/support_tasks_with_different_complexity.md)
- * [How to guarantee that tasks don’t interfere with the node natural functionality?](research-topic/task_isolation.md)
- * [How to measure the performance of a node in a real case?](research-topic/real-world_performance_measurament.md)
- * [What languages and platforms to choose in a real-world implementation and why?](reseearch-topic/real-world_platform_for_implementation.md)
+ * [How to guarantee that tasks don’t interfere with the node natural functionality?](research-topics/task_isolation.md)
+ * [How to measure the performance of a node in a real case?](research-topics/real-world_performance_measurament.md)
+ * [What languages and platforms to choose in a real-world implementation and why?](research-topics/real-world_platform_for_implementation.md)
 
 ### Team Members
 

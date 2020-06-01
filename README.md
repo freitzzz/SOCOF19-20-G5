@@ -63,6 +63,35 @@ In the flowchart below it is possible to observe the process described above tha
 
 ## System Integration and Analysis (Part 3)
 
+To ease the simulation live test, a CLI (Command Line Interface) named **Simulation** was conceived, in order to allow the interaction with the implemented functionalities. It provides three main options:
+
+1. Build a new master for simulation
+2. Start a simulation
+3. Debug Mode
+
+The first one allows the creation of multiple masters, in order to be possible to test the simulation in different environments. Once this option is seleced, the users need to provide the required input to build a master able to simulate the functionalities, explicitly:
+ - The slaves to process the request, by providing their performance index as seen in Figure X
+ - The workers, which are threads that will be available in a *ThreadPool* to send requests to the SlaveHandler and receive the respective results;
+ - Options to select the slave scheduler and slave handler to use.
+
+ ![add_slave_master_builder](figures/add_slave_master_builder.png)
+
+ <center>Figure X - Adding a slave in the build of a master</center>
+
+Once a master is built, users can now enter the `Start a Simulation` page, which request the user to select a master under simulation. Once a master is selected, the CLI presents five options, which allow sending a single request to either process the computation of the sum / multiplication of random numbers, or also send a group of 100x requests of random numbers to either process the sum or multiplication of these. These last ones are very useful to test how the system behaves under multiple concurrent requests, with a moderate amount of load. Once these options are selected, the CLI starts to present the expected result and the ID of the request which is supposed to have the same result after the slaves process it. Finally it is also possible to request the slaves to report their performance index.
+
+![available_options_simulation_page](figures/available_options_simulation_page.png)
+
+ <center>Figure X - Available options in Simulation Page</center>
+
+Last but not least, the `Debug Mode` page, allows the users at any time, to inspect the current status the slave handler (e.g. see the remaining requests left to be processed), inspect the availability and performance index of the requests, remove and add a new slave. In the same way as the `Simulation` page, to access these options it is first needed to select a master under observation.
+
+Additionally, to improve the usability of the CLI, users can refresh their page or go back to the initial page at any time by pressing the 'r' and 'h' buttons respectively. 
+
+![available_options_debug_mode_page](figures/available_options_debug_mode_page.png)
+
+ <center>Figure X - Available options in Debug Mode Page</center>
+
 ### Team Members
 
 `Francisco Machado 1150445@isep.ipp.pt`

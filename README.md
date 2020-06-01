@@ -6,6 +6,8 @@ The development was divided in three parts, being the first two the implementati
 
 ## Coding Guidelines
 
+This project was developed using Java with the JDK version 8. All the code is written in english and camelCase is used as a naming convention. For testing we used the JUnit 4 library and all external dependencies present in unit tests were mocked with Mockito.
+
 ## Domain Concepts
 
 Before attempting to sketch a domain diagram that exposes the domain concepts and their relationships, the team agreed that it was necessary to first think in all problem requirements and in the context of a simulation. Visualizing the problem from a non-technical perspective is easy. We have one master that controls a set of slaves, in which the slaves receive computation requests and answer the results. Now let's take a step further into the problem in a more fine-grain and technical perspective. Independently of the environment which the slaves and nodes are deployed in, there is communication between these that needs to be synchronized in some sort, so that data consistency is fulfilled. The critical point that needs to be tackled to keep the data consistency is the read and write operations of the shared memory that will store the result values. To comply with such, there is the need of using synchronization mechanisms such as locks or lock-free algorithms. Generally lock-free algorithms are more efficient and thus faster due to not requiring CPU additional work to control the threads / processes, but have the disadvantage of not being available in all CPU architecture, as these require the `CMPXCHG` (Compare-and-Swap) instruction to work. Given this, as we are conceiving a simulation, and not implementing a solution for a specific domain, it is required to provide a solution that covers both cases. Given this, the team conceived the following domain diagram:
@@ -21,9 +23,13 @@ As observed in the diagram, besides the concepts that were knew previously, ther
 
 ## Master Node Implementation (Part 2)
 
+<<<<<<< HEAD
 As described in the **Domain Concepts** section, for this project it was introduced the concept of *Slave Handler*, which is a middleman between the Master ands its slaves. Master instead of communicating directly with the slaves, sends commands to `SlaveHandler`, which will then communicate with the slaves. Slaves communicate the results of the requests and the various reports to the SlaveHandler, which SlaveHandler will process the input of the slaves (e.g. store the result in the shared datastructure), and then once all results are gathered, communicates the final result to Master. With this approach, it is possible to create two simulation environments, one in which *Locks* are used to control the concurrency in the shared datastructure access by the threads (`LockBasedSlaveHandler`) and one in which *LockFree* algorithms / datastructures are used to remove the usage of locks by the threads. The same approach is also used to control the availability decrementer and increment of the slaves, as its the SlaveHandler responsibility to control this. There is also another abstraction (`SlaveScheduler`) related to the scheduler of the requests to the slaves, which knows how to properly balance the load in smaller parcels, that are given to the slaves to process. Master is the one responsible to indicate SlaveHandler which scheduler implementation to use. The implementation available (`PerformanceIndexSlaveScheduler`) will be explained in the section below.
 
 ### Load balancing algorithm
+=======
+### Load Balancing Algorithm
+>>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
 
 Before applying the load balancing algorithm the scheduler first detects if the request is for reporting the performance index or computing numbers. If it's for reporting performance the scheduler send the request for each slave that is available. Otherwise, if it's a request for computing numbers, the algorithm is applied and before sending the request it verifies if the slave is available and sends it if it is. In case it's not, the scheduler informs the slave handler that a slave could not process a request which is then rescheduled to another slave.
 
@@ -63,6 +69,8 @@ In the flowchart below it is possible to observe the process described above tha
 
 ## System Integration and Analysis (Part 3)
 
+### Simulation Interface
+
 To ease the simulation live test, a CLI (Command Line Interface) named **Simulation** was conceived, in order to allow the interaction with the implemented functionalities. It provides three main options:
 
 1. Build a new master for simulation
@@ -91,6 +99,14 @@ Additionally, to improve the usability of the CLI, users can refresh their page 
 ![available_options_debug_mode_page](figures/available_options_debug_mode_page.png)
 
  <center>Figure X - Available options in Debug Mode Page</center>
+
+### Research Topic Analysis
+
+ * [What should be done to support tasks with different computational complexity (not necessarily
+resulting from data decomposition operations)?](research-topics/support_tasks_with_different_complexity.md)
+ * [How to guarantee that tasks don’t interfere with the node natural functionality?](research-topics/task_isolation.md)
+ * [How to measure the performance of a node in a real case?](research-topics/real-world_performance_measurament.md)
+ * [What languages and platforms to choose in a real-world implementation and why?](research-topics/real-world_platform_for_implementation.md)
 
 ### Team Members
 

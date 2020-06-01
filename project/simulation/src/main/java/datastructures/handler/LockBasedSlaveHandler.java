@@ -146,17 +146,33 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     @Override
     public Slave removeSlave(Slave slave) {
+<<<<<<< HEAD
         return null;
+=======
+        this.slaves.remove(slave);
+
+        slave.shutdown();
+
+        return slave;
+>>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
     }
 
     @Override
     public void addSlave(Slave slave) {
+<<<<<<< HEAD
 
+=======
+        this.slaves.add(slave);
+>>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
     }
 
     @Override
     public List<Slave> availableSlaves() {
+<<<<<<< HEAD
         return null;
+=======
+        return new ArrayList<>(this.slaves);
+>>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
     }
 
 

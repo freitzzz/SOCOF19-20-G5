@@ -6,7 +6,7 @@ The development was divided in three parts, being the first two the implementati
 
 ## Coding Guidelines
 
-This project was developed using Java with the JDK version 8. All the code is written in english and camelCase is used as a naming convention. For testing we used the JUnit 4 library and all external dependencies present in unit tests were mocked with Mockito.
+This project was developed using Java with the JDK version 8. All the code is written in English and camelCase is used as a naming convention. For testing we used the JUnit 4 library and all external dependencies present in unit tests were mocked with Mockito.
 
 ## Domain Concepts
 
@@ -14,11 +14,19 @@ Before attempting to sketch a domain diagram that exposes the domain concepts an
 
 ![domain_diagram](diagrams/res/domain.png)
 
-<center>Figure X - Simulation Domain Diagram</center>
+Figure 1 - Simulation Domain Diagram
 
 As observed in the diagram, besides the concepts that were knew previously, there is now the concept of `Slave Handler` and `Slave Scheduler`. Slave Handler can be seen as a middleman between Master and the Slaves, that manages the communication between these and the storage of the result values. Being the one who requires communication synchronization, it needs to be an abstraction to provide both implementation for lock-based and lock-free mechanisms. Slave Scheduler on the other hand is a strategy for the division of the requests that require computation in parcels that will be delivered to the slaves. Master and Slaves only receive and perform requests, as all the management logic of both requests is centralized in the Slave Handler implementation. For example, it is the slave handler implementation responsibility to contact the slave and update its properties such as its availability.
 
 ## Slave Node Implementation (Part 1)
+
+In order to create a slave all we need to do is specify it's performance index, with this the slave starts with full availability and creates a new fixed thread pool with the same size as its performance index. A slave has a public method that processes a given request and will eventually return the result to the master (slave handler). In this method the slave verifies the type of request received, creates the respective thread and asks its executor to execute the thread. In case the request is for computing numbers the thread computes them and returns the result to the slave handler. A performance index report request originates another thread that reports the slaves performance index to the slave handler.
+
+In further iterations where it is required to simulate a slave unresponsiveness we added a condition in the beginning of the process method that randomly decides if the node should fail the request or not, when it decides to fail it communicates with the slave handler that it could not process the request.
+
+In the last iteration it is required to stop the slave at any moment. To accomplish this we added another method for shutting down the slave's executor service which sends a interrupt signal to all current active threads. In these threads, before we communicated the result, we added a interrupt verification. In case the thread got interrupted the compute thread reported to the slave handler that it couldn't process the request, for the performance index report thread it didn't communicate with the slave handler because there is no need for a slave handler that stopped a slave and removed it from its list of slaves to know its performance index. Lastly, in the slave's process method, we verified if the thread pool is shutdown, if it is the slave reports to the slave handler that it could not process the request, if not it resumes the slave's normal behavior.
+
+
 
 
 ## Master Node Implementation (Part 2)
@@ -59,9 +67,11 @@ if(numbersSize-endIndex < 2){
 
 ```
 
-In the flowchart below it is possible to observe the process described above that defines this load balancing algorithm.
+In figure 2 it is possible to observe the process described above that defines this load balancing algorithm.
 
 ![](diagrams/res/PerformanceIndexSlaveScheduler.png)
+
+Figure 2 - Load balancing algorithm's flowchart
 
 ## System Integration and Analysis (Part 3)
 
@@ -73,20 +83,20 @@ To ease the simulation live test, a CLI (Command Line Interface) named **Simulat
 2. Start a simulation
 3. Debug Mode
 
-The first one allows the creation of multiple masters, in order to be possible to test the simulation in different environments. Once this option is seleced, the users need to provide the required input to build a master able to simulate the functionalities, explicitly:
+The first one allows the creation of multiple masters, in order to be possible to test the simulation in different environments. Once this option is selected, the users need to provide the required input to build a master able to simulate the functionalities, explicitly:
  - The slaves to process the request, by providing their performance index as seen in Figure X
  - The workers, which are threads that will be available in a *ThreadPool* to send requests to the SlaveHandler and receive the respective results;
  - Options to select the slave scheduler and slave handler to use.
 
  ![add_slave_master_builder](figures/add_slave_master_builder.png)
 
- <center>Figure X - Adding a slave in the build of a master</center>
+Figure 3 - Adding a slave in the build of a master
 
 Once a master is built, users can now enter the `Start a Simulation` page, which request the user to select a master under simulation. Once a master is selected, the CLI presents five options, which allow sending a single request to either process the computation of the sum / multiplication of random numbers, or also send a group of 100x requests of random numbers to either process the sum or multiplication of these. These last ones are very useful to test how the system behaves under multiple concurrent requests, with a moderate amount of load. Once these options are selected, the CLI starts to present the expected result and the ID of the request which is supposed to have the same result after the slaves process it. Finally it is also possible to request the slaves to report their performance index.
 
 ![available_options_simulation_page](figures/available_options_simulation_page.png)
 
- <center>Figure X - Available options in Simulation Page</center>
+Figure 4 - Available options in Simulation Page
 
 Last but not least, the `Debug Mode` page, allows the users at any time, to inspect the current status the slave handler (e.g. see the remaining requests left to be processed), inspect the availability and performance index of the requests, remove and add a new slave. In the same way as the `Simulation` page, to access these options it is first needed to select a master under observation.
 
@@ -94,7 +104,7 @@ Additionally, to improve the usability of the CLI, users can refresh their page 
 
 ![available_options_debug_mode_page](figures/available_options_debug_mode_page.png)
 
- <center>Figure X - Available options in Debug Mode Page</center>
+ Figure 5 - Available options in Debug Mode Page
 
 ### Research Topic Analysis
 

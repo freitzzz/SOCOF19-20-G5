@@ -4,13 +4,13 @@ import java.util.Objects;
 
 public abstract class Request {
 
-    private final int requestID;
+    private final long requestID;
 
-    public int getRequestID() {
+    public long getRequestID() {
         return requestID;
     }
 
-    public Request(final int requestID) {
+    public Request(final long requestID) {
         this.requestID = requestID;
     }
 

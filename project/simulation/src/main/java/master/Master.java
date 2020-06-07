@@ -10,6 +10,7 @@ import slave.Slave;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -80,7 +81,7 @@ public class Master {
     public void requestSumOfNumbers(final List<Integer> numbers) {
 
         executor.execute(() -> {
-            slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, requestPerformed++, CodeExecutionRequest.Operation.ADD));
+            slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE, CodeExecutionRequest.Operation.ADD));
         });
 
     }
@@ -88,7 +89,7 @@ public class Master {
     public void requestMultiplicationOfNumbers(final List<Integer> numbers) {
 
         executor.execute(() -> {
-            slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, requestPerformed++, CodeExecutionRequest.Operation.MULTIPLY));
+            slaveHandler.requestSlaves(new CodeExecutionRequest(numbers, UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE, CodeExecutionRequest.Operation.MULTIPLY));
         });
 
     }
@@ -96,7 +97,7 @@ public class Master {
     public void requestSlavesPerformanceIndex() {
 
         executor.execute(() -> {
-            slaveHandler.requestSlaves(new ReportPerformanceIndexRequest(requestPerformed++));
+            slaveHandler.requestSlaves(new ReportPerformanceIndexRequest(UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE));
         });
 
     }

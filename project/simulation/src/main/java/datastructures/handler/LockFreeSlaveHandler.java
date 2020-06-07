@@ -1,5 +1,6 @@
 package datastructures.handler;
 
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import datastructures.*;
 import datastructures.list.FixedSizeLockFreeList;
 import datastructures.map.LockFreeMap;
@@ -10,6 +11,7 @@ import slave.Slave;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -17,7 +19,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private final FixedSizeLockFreeList<Slave> slaves;
 
-    protected final LockFreeMap<Integer, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
+    protected final LockFreeMap<Long, FixedSizeLockFreeList<Result>> computationResults = new LockFreeMap<>();
 
     private final ScheduledExecutorService rescheduleExecutor;
 
@@ -32,7 +34,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     public void requestSlaves(final Request request) {
 
         List<SlaveToSchedule> slavesToSchedule = slaves
-                .parallelStream()
+                .stream()
                 .map(slave -> new SlaveToSchedule(slave, tryReserveSlaveAvailability(slave, request)))
                 .collect(Collectors.toList());
 
@@ -46,14 +48,14 @@ public class LockFreeSlaveHandler extends SlaveHandler {
         if (results.hasReachedMaxSize()) {
             final int finalResultSum;
             Result finalResult;
-            switch(result.getOperation()){
+            switch (result.getOperation()) {
                 case ADD:
                     finalResultSum = results.parallelStream().mapToInt(Result::getValue).sum();
-                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
+                    finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
                     break;
                 case MULTIPLY:
-                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1,(i, i1) -> i*i1);
-                    finalResult = new Result(finalResultSum, result.getRequestID(),result.getOperation());
+                    finalResultSum = results.parallelStream().mapToInt(Result::getValue).reduce(1, (i, i1) -> i * i1);
+                    finalResult = new Result(finalResultSum, result.getRequestID(), result.getOperation());
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown operation");
@@ -75,7 +77,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     @Override
     public void reportAvailability(Slave slave, Request request) {
 
-        if(tryUnreserveSlaveAvailability(slave, request)) {
+        if (tryUnreserveSlaveAvailability(slave, request)) {
             final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
 
             super.master.receiveSlaveAvailability(details);
@@ -87,16 +89,16 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     @Override
     public void reportCouldNotProcessRequest(Slave slave, Request request) {
-        if(request instanceof ReportPerformanceIndexRequest) {
+        if (request instanceof ReportPerformanceIndexRequest) {
             this.rescheduleRequestToSlaveInTheFuture(slave, request);
         } else {
-            final Optional<Slave> optionalSlave =  this.slaves.parallelStream().filter(slave1 -> slave1 != slave).findAny();
+            final Optional<Slave> optionalSlave = this.slaves.stream().filter(slave1 -> slave1 != slave).findAny();
 
-            if(optionalSlave.isPresent()) {
+            if (optionalSlave.isPresent()) {
 
                 final Slave chosenSlave = optionalSlave.get();
 
-                if(tryReserveSlaveAvailability(chosenSlave, request)) {
+                if (tryReserveSlaveAvailability(chosenSlave, request)) {
 
                     chosenSlave.process(request, this);
 
@@ -111,7 +113,7 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     @Override
     public void notifyScheduledRequests(Request request, int numberOfSchedules) {
-        if(request instanceof CodeExecutionRequest) {
+        if (request instanceof CodeExecutionRequest) {
             this.computationResults.put(request.getRequestID(), new FixedSizeLockFreeList<>(numberOfSchedules));
         }
     }
@@ -136,14 +138,17 @@ public class LockFreeSlaveHandler extends SlaveHandler {
     }
 
     protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
-        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 35, TimeUnit.SECONDS);
+        this.rescheduleExecutor.schedule(() -> {
+            slave.process(request, this);
+        }, 10, TimeUnit.SECONDS);
+
     }
 
     private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {
         boolean reserved = false;
-        final int currentSlaveAvailability  = slave.getAvailability().get();
+        final int currentSlaveAvailability = slave.getAvailability().get();
         final int slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
-        if(slaveAvailabilityAfterCompute >= 0) {
+        if (slaveAvailabilityAfterCompute >= 0) {
 
             reserved = slave.getAvailability().compareAndSet(currentSlaveAvailability, slaveAvailabilityAfterCompute);
 
@@ -153,9 +158,9 @@ public class LockFreeSlaveHandler extends SlaveHandler {
 
     private boolean tryUnreserveSlaveAvailability(final Slave slave, final Request request) {
         boolean unreserved = true;
-        final int currentSlaveAvailability  = slave.getAvailability().get();
+        final int currentSlaveAvailability = slave.getAvailability().get();
         final int slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
-        if(slaveAvailabilityAfterCompute <= 100) {
+        if (slaveAvailabilityAfterCompute <= 100) {
 
             unreserved = slave.getAvailability().compareAndSet(currentSlaveAvailability, slaveAvailabilityAfterCompute);
 

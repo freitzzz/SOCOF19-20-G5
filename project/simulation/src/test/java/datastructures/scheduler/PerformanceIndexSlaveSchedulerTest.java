@@ -211,7 +211,7 @@ public class PerformanceIndexSlaveSchedulerTest {
 
             }
 
-            when(codeExecutionRequest.getRequestID()).thenReturn(1);
+            when(codeExecutionRequest.getRequestID()).thenReturn(1l);
 
             when(codeExecutionRequest.getOp()).thenReturn(CodeExecutionRequest.Operation.ADD);
 

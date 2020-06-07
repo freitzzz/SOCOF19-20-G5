@@ -8,9 +8,8 @@ public class FixedSizeLockFreeList<T> extends LockFreeList<T> {
         this.maxSize = maxSize;
     }
 
-    // Might be inconsistent
     public boolean hasReachedMaxSize() {
-        return this.size() == maxSize;
+        return this.size() >= maxSize;
     }
 
 }

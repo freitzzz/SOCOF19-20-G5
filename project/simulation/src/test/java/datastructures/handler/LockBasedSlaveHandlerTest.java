@@ -160,13 +160,13 @@ public class LockBasedSlaveHandlerTest {
             when(slave.getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(25);
         });
 
-        when(codeExecutionRequest.getRequestID()).thenReturn(1);
+        when(codeExecutionRequest.getRequestID()).thenReturn(1l);
 
         slaveHandler.requestSlaves(codeExecutionRequest);
 
         Result result = mock(Result.class);
 
-        when(result.getRequestID()).thenReturn(1);
+        when(result.getRequestID()).thenReturn(1l);
         when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);
 
         slaveHandler.notifyScheduledRequests(codeExecutionRequest, slaves.size());
@@ -283,13 +283,13 @@ public class LockBasedSlaveHandlerTest {
             when(slave.getAvailabilityReducePerCompute(codeExecutionRequest)).thenReturn(25);
         });
 
-        when(codeExecutionRequest.getRequestID()).thenReturn(1);
+        when(codeExecutionRequest.getRequestID()).thenReturn(1l);
 
         slaveHandler.requestSlaves(codeExecutionRequest);
 
         Result result = mock(Result.class);
 
-        when(result.getRequestID()).thenReturn(1);
+        when(result.getRequestID()).thenReturn(1l);
 
         when(result.getValue()).thenReturn(1);
         when(result.getOperation()).thenReturn(CodeExecutionRequest.Operation.ADD);

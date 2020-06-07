@@ -9,7 +9,7 @@ public class CodeExecutionRequest extends Request {
 
     private final Operation op;
 
-    public CodeExecutionRequest(final List<Integer> numbers, final int requestID, final Operation op) {
+    public CodeExecutionRequest(final List<Integer> numbers, final long requestID, final Operation op) {
         super(requestID);
 
         this.numbers = numbers;

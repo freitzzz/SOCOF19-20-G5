@@ -5,25 +5,27 @@ import datastructures.list.LockBasedList;
 import datastructures.map.LockBasedMap;
 import master.Master;
 import slave.Slave;
+
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+
 import datastructures.scheduler.SlaveScheduler;
 
-public class LockBasedSlaveHandler extends SlaveHandler{
+public class LockBasedSlaveHandler extends SlaveHandler {
 
     ReentrantLock lock = new ReentrantLock();
 
     private LockBasedList<Slave> slaves;
 
-    protected final LockBasedMap<Integer, LockBasedList<Result>> computationResults = new LockBasedMap<>();
+    protected final LockBasedMap<Long, LockBasedList<Result>> computationResults = new LockBasedMap<>();
 
     private final ScheduledExecutorService rescheduleExecutor;
 
 
-    public LockBasedSlaveHandler(final SlaveScheduler scheduler, final Master master,  final List<Slave> slaves) {
+    public LockBasedSlaveHandler(final SlaveScheduler scheduler, final Master master, final List<Slave> slaves) {
         super(scheduler, master);
         this.slaves = new LockBasedList<>(slaves.size());
         this.slaves.addAll(slaves);
@@ -35,8 +37,8 @@ public class LockBasedSlaveHandler extends SlaveHandler{
     public void requestSlaves(Request request) {
         List<SlaveToSchedule> slavesToSchedule = new ArrayList<>();
         lock.lock();
-        try{
-            for(Slave slave : slaves){
+        try {
+            for (Slave slave : slaves) {
 
                 final boolean reserved = tryReserveSlaveAvailability(slave, request);
 
@@ -93,9 +95,9 @@ public class LockBasedSlaveHandler extends SlaveHandler{
         int currentSlaveAvailability = 0;
         lock.lock();
         try {
-            currentSlaveAvailability  = slave.getAvailability().get();
+            currentSlaveAvailability = slave.getAvailability().get();
             slaveAvailabilityAfterCompute = currentSlaveAvailability + slave.getAvailabilityReducePerCompute(request);
-            if(slaveAvailabilityAfterCompute <= 100) {
+            if (slaveAvailabilityAfterCompute <= 100) {
                 final AvailabilityDetails details = new AvailabilityDetails(slave, slave.getAvailability().intValue());
                 slave.getAvailability().set(slaveAvailabilityAfterCompute);
                 super.master.receiveSlaveAvailability(details);
@@ -108,7 +110,7 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     @Override
     public void reportCouldNotProcessRequest(Slave slave, Request request) {
-        if(request instanceof ReportPerformanceIndexRequest) {
+        if (request instanceof ReportPerformanceIndexRequest) {
             this.rescheduleRequestToSlaveInTheFuture(slave, request);
         } else {
             lock.lock();
@@ -139,59 +141,49 @@ public class LockBasedSlaveHandler extends SlaveHandler{
 
     @Override
     public void notifyScheduledRequests(Request request, int numberOfSchedules) {
-        if(request instanceof CodeExecutionRequest) {
+        if (request instanceof CodeExecutionRequest) {
             this.computationResults.put(request.getRequestID(), new LockBasedList<>(numberOfSchedules));
         }
     }
 
     @Override
     public Slave removeSlave(Slave slave) {
-<<<<<<< HEAD
-        return null;
-=======
         this.slaves.remove(slave);
 
         slave.shutdown();
 
         return slave;
->>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
     }
 
     @Override
     public void addSlave(Slave slave) {
-<<<<<<< HEAD
-
-=======
         this.slaves.add(slave);
->>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
     }
 
     @Override
     public List<Slave> availableSlaves() {
-<<<<<<< HEAD
-        return null;
-=======
+
         return new ArrayList<>(this.slaves);
->>>>>>> 30cffc3249a8b5e2cf912ca9f3d64ceb2788c22e
     }
 
 
     protected void rescheduleRequestToSlaveInTheFuture(final Slave slave, final Request request) {
-        this.rescheduleExecutor.schedule(() -> slave.process(request, this), 300, TimeUnit.MILLISECONDS);
+        this.rescheduleExecutor.schedule(() -> {
+            slave.process(request, this);
+        }, 10, TimeUnit.SECONDS);
+
     }
 
     private boolean tryReserveSlaveAvailability(final Slave slave, final Request request) {
-        final int currentSlaveAvailability  = slave.getAvailability().get();
+        final int currentSlaveAvailability = slave.getAvailability().get();
         final int slaveAvailabilityAfterCompute = currentSlaveAvailability - slave.getAvailabilityReducePerCompute(request);
-        if(slaveAvailabilityAfterCompute >= 0) {
+        if (slaveAvailabilityAfterCompute >= 0) {
             slave.getAvailability().set(slaveAvailabilityAfterCompute);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
-
 
 
     @Override

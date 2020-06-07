@@ -2,7 +2,7 @@ package datastructures;
 
 public class ReportPerformanceIndexRequest extends Request {
 
-    public ReportPerformanceIndexRequest(final int requestID) {
+    public ReportPerformanceIndexRequest(final long requestID) {
         super(requestID);
     }
 }
